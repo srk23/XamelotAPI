@@ -1,6 +1,6 @@
 import pandas as pd
 
-from project.data.clean    import clean_data, get_constant_columns, get_irrelevant_columns, get_sparse_columns
+from project.data.clean    import clean_data
 from project.data.describe import Entry, Descriptor
 
 DESCRIPTOR = Descriptor(
@@ -81,16 +81,4 @@ def test_clean_data_categories():
 
     DF_  = clean_data(DF2, references=refs)
     assert (DF_.equals(DF))
-
-
-def test_get_constant_columns():
-    assert get_constant_columns(DF3) == ['B', 'C']
-
-
-def test_get_irrelevant_columns():
-    assert get_irrelevant_columns(DF3, DESCRIPTOR) == ['B']
-
-
-def test_get_sparse_columns():
-    assert get_sparse_columns(DF3, .5) == ['B', 'C']
     

@@ -5,7 +5,7 @@ from project.data.variables  import HETEROGENEOUS_COLUMNS, \
                                     SPECIFIC_UNKNOWNS,     \
                                     LIMITS,                \
                                     REFERENCES
-from project.misc.dataframes import density, intersect_columns
+from project.misc.dataframes import intersect_columns
 
 # Clean dataframes
 def clean_data(
@@ -16,6 +16,30 @@ def clean_data(
     limits                = LIMITS,
     references            = REFERENCES
 ):
+    """
+    Perform a basic cleaning of the data.
+    Notably, it:
+
+    - Set column names to lower case;
+    - Change type to handle non-float NaN;
+    - Ensure type uniformity;
+    - Change 'unknown values' to NaN;
+    - Remove abnormal values;
+    - Use category names instead of codes.
+
+    Note that this cleaning step is designed as little intrusive and destructive as possible towards the data.
+
+    Args:
+        - df                    : an input DataFrame
+        - heterogeneous_columns : columns known to have heterogeneous typing
+        - generic_unknowns      : values that are generally used to mark unknown values
+        - specific_unknowns     : values that are used to mark unknown values, per column
+        - limits                : valid ranges for numerical values
+        - references            : mapping betzeen categorical codes and humanly readable labels
+    Returns:
+        A cleaner version of the DataFrame provided as input.
+    """
+
     clean_df = df.copy()
         
     # Set column names to lower case    
@@ -61,15 +85,3 @@ def clean_data(
         clean_df[columns_to_remap] = clean_df[columns_to_remap].applymap(_remap_)
 
     return clean_df
-
-
-def get_constant_columns(df):
-    return df.columns[df.nunique() <= 1].to_list()
-
-
-def get_irrelevant_columns(df, descriptor):
-    return [column for column in df.columns if descriptor.get_entry(column).tags not in {"feature", "target"}]
-
-
-def get_sparse_columns(df, threshold):
-    return [column for column in df.columns if density(df, column) < threshold]

@@ -3,16 +3,21 @@
 import numpy  as np
 import pandas as pd
 
-from project.data.clean      import get_constant_columns, get_irrelevant_columns
+from project.data.describe   import Entry
 from project.data.variables  import get_biolevel_columns
 from project.misc.clinical   import compute_bmi, compute_egfr
-from project.misc.dataframes import intersect_columns
+from project.misc.dataframes import density, intersect_columns
+
 
 ###############################
-#      BIOLOGICAL LEVELS      #
+#      BUILD NEW COLUMNS      #
 ###############################
+
 
 def build_egfr(input_df, creatinine_column):
+    """
+    For each row, compute the corresponding eGFR (depends on the creatinine column).
+    """
     def f(df):
         return compute_egfr(df['dage'], df[creatinine_column], df['dsex'], df['dheight'])
 
@@ -80,12 +85,19 @@ def build_easy_trend(df, columns):
 #     return s
 
 
-######################
-#      DIALYSIS      #
-######################
-
-
 def build_binary_code(df, columns, is_positive_or_negative):
+    """
+    Assuming that a set of columns can have their values either, positive, negative, or unknown,
+    provides a base 3 representation of their values for each row.
+
+    Args:
+        - df                      : the input DataFrame
+        - columns                 : the set of columns to consider
+        - is_positive_or_negative : a dictionary mapping each column to a function that tells
+                                    whether a known value is either postive or negative.
+    Returns:
+        A Series
+    """
     s = pd.Series(0, index=df.index)
 
     for order, column in enumerate(columns):
@@ -102,13 +114,49 @@ def build_binary_code(df, columns, is_positive_or_negative):
         s.mask(binary_column == 1, s + 1 * (3 ** order), inplace=True)
     return s
 
+#####################################
+#      SELECT SPECIFIC COLUMNS      #
+#####################################
+
+
+def get_constant_columns(df):
+    return df.columns[df.nunique() <= 1].to_list()
+
+
+def get_irrelevant_columns(df, descriptor):
+    return [column for column in df.columns if descriptor.get_entry(column).tags not in {"feature", "target"}]
+
+
+def get_sparse_columns(df, threshold):
+    return [column for column in df.columns if density(df, column) < threshold]
+
 
 #####################
-#      AUGMENT      #
+#      WRANGLE      #
 #####################
 
 
-def augment_data(df, descriptor):
+def wrangle_data(df, descriptor):
+    """
+    Perform a more in-depth cleaning (wrangling) of the data.
+    Assuming a basic cleaning of the data has already been performed, it:
+
+    - Recompute the eGFR values;
+    - Turn the columns related to biological levels into three simpler columns (for each level):
+        - Minimum: the minimum observed value
+        - Maximum: the maximum observed value
+        - Trend  : a basic trend of the level
+    - Remove constant and irrelevant columns
+    - Recompute BMI values based on Height and Weight
+    - Remove abnormal values based on recomputed values;
+    - Simplify dialysis columns
+
+    Args:
+        - df         : an input DataFrame
+        - descriptor : a Descriptor holding meta-data about the dataset
+    Returns:
+        An even cleaner version of the DataFrame provided as input.
+    """
     df = df.copy()
 
     # Recompute eGFR
@@ -128,43 +176,15 @@ def augment_data(df, descriptor):
         new_column = key + "_trend"
         df[new_column] = build_easy_trend(df, columns)
 
-        # DESCRIPTOR.set_entry(Entry(
-        #     new_column,
-        #     description="Trend for %s." % key,
-        #     files="new",
-        #     column_type="object",
-        #     is_categorical=True,
-        #     binary_keys="",
-        #     tags="feature"
-        # ))
-
         # Get min / max levels
         columns = get_biolevel_columns(key, df)
         columns = intersect_columns(columns, df)
 
         new_column = key + "_min"
         df[new_column] = build_min(df, columns)
-        # DESCRIPTOR.set_entry(Entry(
-        #     new_column,
-        #     description="Minimum value for %s." % key,
-        #     files="new",
-        #     column_type="float32",
-        #     is_categorical=False,
-        #     binary_keys="",
-        #     tags="feature"
-        # ))
 
         new_column = key + "_max"
         df[new_column] = build_max(df, columns)
-        # DESCRIPTOR.set_entry(Entry(
-        #     new_column,
-        #     description="Maximum value for %s." % key,
-        #     files="new",
-        #     column_type="float32",
-        #     is_categorical=False,
-        #     binary_keys="",
-        #     tags="feature"
-        # ))
 
         df.drop(columns=columns, inplace=True)
 
@@ -213,14 +233,65 @@ def augment_data(df, descriptor):
     df["dial_type"] = df["dial_at_tx_type"]
     df["dial_days"] = df["days_on_dial_tx"]
 
-    # We adjust their values.
     df.loc[df['dial_code'].isin([3, 27, 30, 39, 41]), "dial_days"] = 0
     df.loc[df['dial_code'].isin([29, 32]), "dial_days"] = pd.NA
 
     df.loc[df['dial_code'].isin([3, 6, 8, 30, 33, 35, 44, 62]), "dial_type"] = df["dial_at_reg"]
     df.loc[df['dial_code'] == 27, "dial_type"] = "Not on dialysis"
 
-    # We remove old colums.
     df = df.drop(['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'], axis=1)
 
     return df
+
+
+def update_descriptions_after_wrangle(descriptor, files="new"):
+    for key in ['alt', 'ast', 'amylase', 'creatinine', 'degfr']:
+        descriptor.set_entry(Entry(
+            key + "_trend",
+            description="Trend for %s." % key,
+            files=files,
+            column_type="object",
+            is_categorical=True,
+            binary_keys="",
+            tags="feature"
+        ))
+
+        descriptor.set_entry(Entry(
+            key + "_min",
+            description="Minimum value for %s." % key,
+            files=files,
+            column_type="float32",
+            is_categorical=False,
+            binary_keys="",
+            tags="feature"
+        ))
+
+        descriptor.set_entry(Entry(
+            key + "_max",
+            description="Maximum value for %s." % key,
+            files=files,
+            column_type="float32",
+            is_categorical=False,
+            binary_keys="",
+            tags="feature"
+        ))
+
+    descriptor.set_entry(Entry(
+        "dial_type",
+        description="Tells the most recent type of dialysis regarding transplantation.",
+        files=files,
+        column_type="object",
+        is_categorical=True,
+        binary_keys="",
+        tags="feature"
+    ))
+
+    descriptor.set_entry(Entry(
+        "dial_days",
+        description="Tells how long the patient have been on dialysis.",
+        files=files,
+        column_type="float32",
+        is_categorical=False,
+        binary_keys="",
+        tags="feature"
+    ))
