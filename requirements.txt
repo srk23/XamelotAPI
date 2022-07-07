@@ -1,0 +1,6 @@
+pandas~=1.4.2
+matplotlib~=3.5.2
+project~=0.1.1
+numpy~=1.22.3
+sympy~=1.10.1
+setuptools~=44.0.0
