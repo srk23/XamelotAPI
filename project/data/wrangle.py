@@ -157,61 +157,62 @@ def wrangle_data(df, descriptor):
     Returns:
         An even cleaner version of the DataFrame provided as input.
     """
-    df = df.copy()
+    wrangled_df = df.copy()
 
     # Recompute eGFR
-    creatinines = get_biolevel_columns('creatinine', df)
-    egfrs = get_biolevel_columns('degfr', df)
+    creatinines = get_biolevel_columns('creatinine', wrangled_df)
+    egfrs = get_biolevel_columns('degfr', wrangled_df)
     creat_egfr = zip(creatinines, egfrs)
 
     for creatinine, egfr in creat_egfr:
-        s = build_egfr(df, creatinine)
-        df[egfr].where(s.isna(), s, inplace=True)
+        s = build_egfr(wrangled_df, creatinine)
+        wrangled_df[egfr].where(s.isna(), s, inplace=True)
 
     # Get trends, minimum, and maximum
     for key in ['alt', 'ast', 'amylase', 'creatinine', 'degfr']:
         # Get trends
-        columns = get_biolevel_columns(key, df, temporal_columns_only=True)
-        columns = intersect_columns(columns, df)
+        columns = get_biolevel_columns(key, wrangled_df, temporal_columns_only=True)
+        columns = intersect_columns(columns, wrangled_df)
         new_column = key + "_trend"
-        df[new_column] = build_easy_trend(df, columns)
+        df[new_column] = build_easy_trend(wrangled_df, columns)
 
         # Get min / max levels
-        columns = get_biolevel_columns(key, df)
-        columns = intersect_columns(columns, df)
+        columns = get_biolevel_columns(key, wrangled_df)
+        columns = intersect_columns(columns, wrangled_df)
 
         new_column = key + "_min"
-        df[new_column] = build_min(df, columns)
+        wrangled_df[new_column] = build_min(wrangled_df, columns)
 
         new_column = key + "_max"
-        df[new_column] = build_max(df, columns)
+        wrangled_df[new_column] = build_max(wrangled_df, columns)
 
-        df.drop(columns=columns, inplace=True)
+        wrangled_df.drop(columns=columns, inplace=True)
 
     # Remove constant columns
-    constant_columns = get_constant_columns(df)
-    df.drop(constant_columns, axis=1, inplace=True)
+    constant_columns = get_constant_columns(wrangled_df)
+    wrangled_df.drop(constant_columns, axis=1, inplace=True)
 
     # Remove irrelevant columns
-    irrelevant_columns = get_irrelevant_columns(df, descriptor)
-    df.drop(irrelevant_columns, axis=1, inplace=True)
+    irrelevant_columns = get_irrelevant_columns(wrangled_df, descriptor)
+    wrangled_df.drop(irrelevant_columns, axis=1, inplace=True)
 
     # Impute BMI
-    df['rbmi'] = df['rbmi'].mask(df['rbmi'].isna(), compute_bmi(df['rweight'], df['rheight']))
-    df['dbmi'] = df['dbmi'].mask(df['dbmi'].isna(), compute_bmi(df['dweight'], df['dheight']))
+    min_threshold, max_threshold = (5, 60)
+
+    for prefix in ('r', 'd'):
+        bmi    = prefix + "bmi"
+        weight = prefix + "weight"
+        height = prefix + "height"
+
+        condition        = wrangled_df[bmi].isna()
+        other            = compute_bmi(wrangled_df[weight], wrangled_df[height])
+        wrangled_df[bmi] = wrangled_df[bmi].mask(condition, other)
 
     # Additional cleaning
-    min_threshold = 5
-    max_threshold = 60
-
-    df['rweight'].where((min_threshold < df['rbmi']) & (df['rbmi'] < max_threshold), pd.NA, inplace=True)
-    df['dweight'].where((min_threshold < df['dbmi']) & (df['dbmi'] < max_threshold), pd.NA, inplace=True)
-
-    df['rheight'].where((min_threshold < df['rbmi']) & (df['rbmi'] < max_threshold), pd.NA, inplace=True)
-    df['dheight'].where((min_threshold < df['dbmi']) & (df['dbmi'] < max_threshold), pd.NA, inplace=True)
-
-    df['rbmi'].where((min_threshold < df['rbmi']) & (df['rbmi'] < max_threshold), pd.NA, inplace=True)
-    df['dbmi'].where((min_threshold < df['dbmi']) & (df['dbmi'] < max_threshold), pd.NA, inplace=True)
+        condition = (min_threshold < wrangled_df[bmi]) & (wrangled_df[bmi] < max_threshold)
+        wrangled_df[weight].where(condition, pd.NA, inplace=True)
+        wrangled_df[height].where(condition, pd.NA, inplace=True)
+        wrangled_df[bmi].where(condition, pd.NA, inplace=True)
 
     # Transform dialysis related columns
     is_positive_or_negative = {
@@ -222,12 +223,7 @@ def wrangle_data(df, descriptor):
     }
     df["dial_code"] = build_binary_code(
         df,
-        [
-            "days_on_dial_tx",
-            "dial_at_reg",
-            "dial_at_tx_type",
-            "dial_at_tx"
-        ],
+        list(is_positive_or_negative.keys()),
         is_positive_or_negative)
 
     df["dial_type"] = df["dial_at_tx_type"]
@@ -245,6 +241,9 @@ def wrangle_data(df, descriptor):
 
 
 def update_descriptions_after_wrangle(descriptor, files="new"):
+    """
+    Update a descriptor by adding the new columns introduced with `wrangle_data`.
+    """
     for key in ['alt', 'ast', 'amylase', 'creatinine', 'degfr']:
         descriptor.set_entry(Entry(
             key + "_trend",
