@@ -135,112 +135,93 @@ def get_sparse_columns(df, threshold):
 #      WRANGLE      #
 #####################
 
-
-def wrangle_data(df, descriptor):
-    """
-    Perform a more in-depth cleaning (wrangling) of the data.
-    Assuming a basic cleaning of the data has already been performed, it:
-
-    - Recompute the eGFR values;
-    - Turn the columns related to biological levels into three simpler columns (for each level):
-        - Minimum: the minimum observed value
-        - Maximum: the maximum observed value
-        - Trend  : a basic trend of the level
-    - Remove constant and irrelevant columns
-    - Recompute BMI values based on Height and Weight
-    - Remove abnormal values based on recomputed values;
-    - Simplify dialysis columns
-
-    Args:
-        - df         : an input DataFrame
-        - descriptor : a Descriptor holding meta-data about the dataset
-    Returns:
-        An even cleaner version of the DataFrame provided as input.
-    """
-    wrangled_df = df.copy()
-
-    # Recompute eGFR
-    creatinines = get_biolevel_columns('creatinine', wrangled_df)
-    egfrs = get_biolevel_columns('degfr', wrangled_df)
-    creat_egfr = zip(creatinines, egfrs)
-
-    for creatinine, egfr in creat_egfr:
-        s = build_egfr(wrangled_df, creatinine)
-        wrangled_df[egfr].where(s.isna(), s, inplace=True)
-
-    # Get trends, minimum, and maximum
-    for key in ['alt', 'ast', 'amylase', 'creatinine', 'degfr']:
-        # Get trends
-        columns = get_biolevel_columns(key, wrangled_df, temporal_columns_only=True)
-        columns = intersect_columns(columns, wrangled_df)
-        new_column = key + "_trend"
-        df[new_column] = build_easy_trend(wrangled_df, columns)
-
-        # Get min / max levels
-        columns = get_biolevel_columns(key, wrangled_df)
-        columns = intersect_columns(columns, wrangled_df)
-
-        new_column = key + "_min"
-        wrangled_df[new_column] = build_min(wrangled_df, columns)
-
-        new_column = key + "_max"
-        wrangled_df[new_column] = build_max(wrangled_df, columns)
-
-        wrangled_df.drop(columns=columns, inplace=True)
-
-    # Remove constant columns
-    constant_columns = get_constant_columns(wrangled_df)
-    wrangled_df.drop(constant_columns, axis=1, inplace=True)
-
-    # Remove irrelevant columns
-    irrelevant_columns = get_irrelevant_columns(wrangled_df, descriptor)
-    wrangled_df.drop(irrelevant_columns, axis=1, inplace=True)
-
-    # Impute BMI
-    min_threshold, max_threshold = (5, 60)
+# Impute BMI
+def _wrangle_data_impute_bmi_(df, limits_bmi):
+    min_threshold, max_threshold = limits_bmi
 
     for prefix in ('r', 'd'):
         bmi    = prefix + "bmi"
         weight = prefix + "weight"
         height = prefix + "height"
 
-        condition        = wrangled_df[bmi].isna()
-        other            = compute_bmi(wrangled_df[weight], wrangled_df[height])
-        wrangled_df[bmi] = wrangled_df[bmi].mask(condition, other)
+        # Imputation
+        condition = df[bmi].isna()
+        other     = compute_bmi(df[weight], df[height])
+        df[bmi]   = df[bmi].mask(condition, other)
 
-    # Additional cleaning
-        condition = (min_threshold < wrangled_df[bmi]) & (wrangled_df[bmi] < max_threshold)
-        wrangled_df[weight].where(condition, pd.NA, inplace=True)
-        wrangled_df[height].where(condition, pd.NA, inplace=True)
-        wrangled_df[bmi].where(condition, pd.NA, inplace=True)
+        # Additional cleaning
+        condition  = (min_threshold < df[bmi]) & (df[bmi] < max_threshold)
+        df[weight] = df[weight].where(condition, pd.NA)
+        df[height] = df[height].where(condition, pd.NA)
+        df[bmi]    = df[bmi].where(condition, pd.NA)
+    return df
 
-    # Transform dialysis related columns
+# Transform dialysis related columns
+def _wrangle_data_transform_dialysis_columns_(df, descriptor):
     is_positive_or_negative = {
         "days_on_dial_tx": lambda x: 0 if x > 0 else 1,
-        "dial_at_reg": lambda x: 1 if x == "Not on dialysis" else 0,
+        "dial_at_reg"    : lambda x: 1 if x == "Not on dialysis" else 0,
         "dial_at_tx_type": lambda x: 1 if x == "Not on dialysis" else 0,
-        "dial_at_tx": lambda x: descriptor.get_entry("dial_at_tx").binary_keys[x]
+        "dial_at_tx"     : lambda x: descriptor.get_entry("dial_at_tx").binary_keys[x]
     }
     df["dial_code"] = build_binary_code(
         df,
         list(is_positive_or_negative.keys()),
-        is_positive_or_negative)
+        is_positive_or_negative
+    )
 
     df["dial_type"] = df["dial_at_tx_type"]
     df["dial_days"] = df["days_on_dial_tx"]
 
     df.loc[df['dial_code'].isin([3, 27, 30, 39, 41]), "dial_days"] = 0
-    df.loc[df['dial_code'].isin([29, 32]), "dial_days"] = pd.NA
+    df.loc[df['dial_code'].isin([29, 32])           , "dial_days"] = np.nan
 
     df.loc[df['dial_code'].isin([3, 6, 8, 30, 33, 35, 44, 62]), "dial_type"] = df["dial_at_reg"]
     df.loc[df['dial_code'] == 27, "dial_type"] = "Not on dialysis"
 
-    df = df.drop(['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'], axis=1)
+    return df.drop(columns=['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'])
 
+# Recompute eGFR
+def _wrangle_data_recompute_egfr_(df):
+    creatinines = get_biolevel_columns('creatinine', df)
+    egfrs       = get_biolevel_columns('degfr'     , df)
+    creat_egfr  = zip(creatinines, egfrs)
+
+    for creatinine, egfr in creat_egfr:
+        s = build_egfr(df, creatinine)
+        df[egfr] = df[egfr].where(s.isna(), s)
     return df
 
+# Get trends, minimum, and maximum
+def _wrangle_data_impute_biolevels_(df):
+    def _columns_(key_, df_, temporal_columns_only=False):
+        columns_ = get_biolevel_columns(key_, df_, temporal_columns_only=temporal_columns_only)
+        return intersect_columns(columns_, df_)
 
-def update_descriptions_after_wrangle(descriptor, files="new"):
+    columns_to_drop = list()
+    for key in ('alt', 'ast', 'amylase', 'creatinine', 'degfr'):
+        # Get trends
+        columns = _columns_(key, df, temporal_columns_only=True)
+        df[key + "_trend"] = build_easy_trend(df, columns)
+
+        # Get min / max levels
+        columns = _columns_(key, df, temporal_columns_only=False)
+        df[key + "_min"] = build_min(df, columns)
+        df[key + "_max"] = build_max(df, columns)
+
+        columns_to_drop += columns
+    return df.drop(columns=columns_to_drop)
+
+# Remove irrelevant columns
+def _wrangle_data_remove_irrelevant_columns_(df, descriptor):
+    return df.drop(columns=get_irrelevant_columns(df, descriptor))
+
+# Remove constant columns
+def _wrangle_data_remove_constant_columns_(df):
+    return df.drop(columns=get_constant_columns(df))
+
+# Update Descriptor according to wrangling
+def _wrangle_data_update_descriptor_(descriptor, files="new"):
     """
     Update a descriptor by adding the new columns introduced with `wrangle_data`.
     """
@@ -294,3 +275,47 @@ def update_descriptions_after_wrangle(descriptor, files="new"):
         binary_keys="",
         tags="feature"
     ))
+
+def wrangle_data(df, descriptor, limits_bmi=(5, 60), files="new"):
+    """
+    Perform a more in-depth cleaning (wrangling) of the data.
+    Assuming a basic cleaning of the data has already been performed, it:
+
+    - Recompute the eGFR values;
+    - Turn the columns related to biological levels into three simpler columns (for each level):
+        - Minimum: the minimum observed value
+        - Maximum: the maximum observed value
+        - Trend  : a basic trend of the level
+    - Remove constant and irrelevant columns
+    - Recompute BMI values based on Height and Weight
+    - Remove abnormal values based on recomputed values;
+    - Simplify dialysis columns
+
+    Args:
+        - df         : an input DataFrame
+        - descriptor : a Descriptor holding meta-data about the dataset
+    Returns:
+        An even cleaner version of the DataFrame provided as input.
+    """
+    wrangled_df = df.copy()
+    _wrangle_data_update_descriptor_(descriptor, files=files)
+
+    # Impute BMI
+    wrangled_df = _wrangle_data_impute_bmi_(wrangled_df, limits_bmi=limits_bmi)
+
+    # Transform dialysis related columns
+    wrangled_df = _wrangle_data_transform_dialysis_columns_(wrangled_df, descriptor)
+
+    # Recompute eGFR
+    wrangled_df = _wrangle_data_recompute_egfr_(wrangled_df)
+
+    # Get trends, minimum, and maximum
+    wrangled_df = _wrangle_data_impute_biolevels_(wrangled_df)
+
+    # Remove irrelevant columns
+    wrangled_df = _wrangle_data_remove_irrelevant_columns_(wrangled_df, descriptor)
+
+    # Remove constant columns
+    wrangled_df = _wrangle_data_remove_constant_columns_(wrangled_df)
+
+    return wrangled_df

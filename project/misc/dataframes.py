@@ -1,5 +1,12 @@
+import pandas as pd
+
+def build_empty_mask(df):
+    return pd.DataFrame(False, index=df.index, columns=df.columns)
+
+
 def density(df, column):
     return df[column].count() / len(df)
+
 
 def intersect_columns(l, df):
     """
