@@ -4,7 +4,7 @@ import numpy  as np
 import pandas as pd
 
 from project.data.describe   import Entry
-from project.data.variables  import get_biolevel_columns
+from project.data.parameters import get_biolevel_columns, BMI_LIMITS
 from project.misc.clinical   import compute_bmi, compute_egfr
 from project.misc.dataframes import density, intersect_columns
 
@@ -220,6 +220,13 @@ def _wrangle_data_remove_irrelevant_columns_(df, descriptor):
 def _wrangle_data_remove_constant_columns_(df):
     return df.drop(columns=get_constant_columns(df))
 
+# Reorder columns
+def _wrangle_data_reorder_columns_(df, descriptor):
+    cols1 = [col for col in df.columns if descriptor.get_entry(col).tags != "target"]
+    cols2 = [col for col in df.columns if descriptor.get_entry(col).tags == "target"]
+
+    return df[cols1 + cols2]
+
 # Update Descriptor according to wrangling
 def _wrangle_data_update_descriptor_(descriptor, files="new"):
     """
@@ -276,7 +283,7 @@ def _wrangle_data_update_descriptor_(descriptor, files="new"):
         tags="feature"
     ))
 
-def wrangle_data(df, descriptor, limits_bmi=(5, 60), files="new"):
+def wrangle_data(df, descriptor, limits_bmi=BMI_LIMITS, files="new"):
     """
     Perform a more in-depth cleaning (wrangling) of the data.
     Assuming a basic cleaning of the data has already been performed, it:
@@ -318,4 +325,23 @@ def wrangle_data(df, descriptor, limits_bmi=(5, 60), files="new"):
     # Remove constant columns
     wrangled_df = _wrangle_data_remove_constant_columns_(wrangled_df)
 
+    # Reorder columns
+    wrangled_df = _wrangle_data_reorder_columns_(wrangled_df, descriptor)
+
     return wrangled_df
+
+def extract_dense_dataframe(df, threshold):
+    """
+    Remove the columns that are less dense than a given threshold,
+    then remove the rows that contain missing values.
+
+    Args:
+        - df        : the input DataFrame
+        - threshold : the density threshold
+
+    Returns:
+        A dense DataFrame
+    """
+    df = df.copy()
+    sparse_columns = get_sparse_columns(df, threshold)
+    return df.drop(sparse_columns, axis=1).dropna()

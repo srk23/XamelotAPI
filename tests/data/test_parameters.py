@@ -1,4 +1,4 @@
-from   project.data.variables import is_biolevel
+from   project.data.parameters import is_biolevel
 
 def test_is_biological_level():
     assert is_biolevel("alt")

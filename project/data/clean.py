@@ -1,6 +1,6 @@
 # Provide a set of tools to clean raw datasets.
 
-from project.data.variables  import HETEROGENEOUS_COLUMNS, \
+from project.data.parameters import HETEROGENEOUS_COLUMNS, \
                                     GENERIC_UNKNOWNS,      \
                                     SPECIFIC_UNKNOWNS,     \
                                     LIMITS,                \
