@@ -174,33 +174,39 @@ def plot_densities(df):
     print("Red bars show columns that have more missing values than non-missing ones.")
 
 
-def plot_thresholds(df, steps):
+def plot_thresholds(df, steps, row_yticks=(0, 40000, 5000), col_yticks=(0, 90, 10)):
     # Compute
     thresholds = [i / steps for i in range(steps + 1)]
-    maxnrow = df.shape[0]
-    maxncol = df.shape[1]
-    nrows = []
+    maxnrow, maxncol = df.shape
     ncols = []
+    nrows = []
 
     for threshold in thresholds:
         df_ = extract_dense_dataframe(df, threshold)
-        nrows.append(df_.shape[0] / maxnrow)
-        ncols.append(df_.shape[1] / maxncol)
+        nrows.append(df_.shape[0])
+        ncols.append(df_.shape[1])
 
     # Plot
-    fig, ax = plt.subplots(figsize=(20, 10))
-    ax.grid(visible=True, which='both', zorder=0)
+    fig, ax_row = plt.subplots(figsize=(20, 10))
+    ax_col = ax_row.twinx()
 
-    ax.plot(thresholds, nrows, label="rows")
-    ax.plot(thresholds, ncols, label="columns")
+    lns_row = ax_row.plot(thresholds, nrows, color="orange", label="rows")
+    lns_col = ax_col.plot(thresholds, ncols, label="columns")
 
-    plt.xticks([i / 20 for i in range(21)])
-    plt.yticks([i / 10 for i in range(11)])
+    ax_row.grid(visible=True, which='both', zorder=0)
+    ax_col.grid(visible=True, which='both', zorder=0)
 
-    plt.xlabel("Threshold")
-    plt.ylabel("Percentage of used columns/rows")
+    ax_row.set_yticks(range(*row_yticks))
+    ax_col.set_yticks(range(*col_yticks))
+    plt.xticks([.05 * i for i in range(21)])
 
-    plt.legend()
+    ax_row.set_xlabel("Threshold")
+    ax_row.set_ylabel("Number of rows (max: %s)"    % maxnrow)
+    ax_col.set_ylabel("Number of columns (max: %s)" % maxncol)
+
+    lns = lns_row + lns_col
+    labs = [l.get_label() for l in lns]
+    plt.legend(lns, labs, loc='lower left')
     plt.show()
 
 def plot_intersection(df1, df2, label1='Transplant', label2='Offering'):
