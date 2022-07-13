@@ -1,7 +1,7 @@
 import numpy  as np
 import pandas as pd
 
-def split_dataset(df, fracs, targets, main_target):
+def split_dataset(df, fracs, main_target):
     df_ = df.copy()
     counts = df_[main_target].value_counts()
 

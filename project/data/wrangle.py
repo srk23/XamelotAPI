@@ -136,7 +136,7 @@ def get_sparse_columns(df, threshold):
 #####################
 
 # Impute BMI
-def _wrangle_data_impute_bmi_(df, limits_bmi):
+def impute_bmi(df, limits_bmi):
     min_threshold, max_threshold = limits_bmi
 
     for prefix in ('r', 'd'):
@@ -157,7 +157,7 @@ def _wrangle_data_impute_bmi_(df, limits_bmi):
     return df
 
 # Transform dialysis related columns
-def _wrangle_data_transform_dialysis_columns_(df, descriptor):
+def transform_dialysis_columns(df, descriptor):
     is_positive_or_negative = {
         "days_on_dial_tx": lambda x: 0 if x > 0 else 1,
         "dial_at_reg"    : lambda x: 1 if x == "Not on dialysis" else 0,
@@ -182,7 +182,7 @@ def _wrangle_data_transform_dialysis_columns_(df, descriptor):
     return df.drop(columns=['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'])
 
 # Recompute eGFR
-def _wrangle_data_recompute_egfr_(df):
+def recompute_egfr(df):
     creatinines = get_biolevel_columns('creatinine', df)
     egfrs       = get_biolevel_columns('degfr'     , df)
     creat_egfr  = zip(creatinines, egfrs)
@@ -193,7 +193,7 @@ def _wrangle_data_recompute_egfr_(df):
     return df
 
 # Get trends, minimum, and maximum
-def _wrangle_data_impute_biolevels_(df):
+def impute_biolevels(df):
     def _columns_(key_, df_, temporal_columns_only=False):
         columns_ = get_biolevel_columns(key_, df_, temporal_columns_only=temporal_columns_only)
         return intersect_columns(columns_, df_)
@@ -213,22 +213,22 @@ def _wrangle_data_impute_biolevels_(df):
     return df.drop(columns=columns_to_drop)
 
 # Remove irrelevant columns
-def _wrangle_data_remove_irrelevant_columns_(df, descriptor):
+def remove_irrelevant_columns(df, descriptor):
     return df.drop(columns=get_irrelevant_columns(df, descriptor))
 
 # Remove constant columns
-def _wrangle_data_remove_constant_columns_(df):
+def remove_constant_columns(df):
     return df.drop(columns=get_constant_columns(df))
 
 # Reorder columns
-def _wrangle_data_reorder_columns_(df, descriptor):
+def reorder_columns(df, descriptor):
     cols1 = [col for col in df.columns if descriptor.get_entry(col).tags != "target"]
     cols2 = [col for col in df.columns if descriptor.get_entry(col).tags == "target"]
 
     return df[cols1 + cols2]
 
 # Update Descriptor according to wrangling
-def _wrangle_data_update_descriptor_(descriptor, files="new"):
+def update_descriptor(descriptor, files="new"):
     """
     Update a descriptor by adding the new columns introduced with `wrangle_data`.
     """
@@ -305,43 +305,28 @@ def wrangle_data(df, descriptor, limits_bmi=BMI_LIMITS, files="new"):
         An even cleaner version of the DataFrame provided as input.
     """
     wrangled_df = df.copy()
-    _wrangle_data_update_descriptor_(descriptor, files=files)
+    update_descriptor(descriptor, files=files)
 
     # Impute BMI
-    wrangled_df = _wrangle_data_impute_bmi_(wrangled_df, limits_bmi=limits_bmi)
+    wrangled_df = impute_bmi(wrangled_df, limits_bmi=limits_bmi)
 
     # Transform dialysis related columns
-    wrangled_df = _wrangle_data_transform_dialysis_columns_(wrangled_df, descriptor)
+    wrangled_df = transform_dialysis_columns(wrangled_df, descriptor)
 
     # Recompute eGFR
-    wrangled_df = _wrangle_data_recompute_egfr_(wrangled_df)
+    wrangled_df = recompute_egfr(wrangled_df)
 
     # Get trends, minimum, and maximum
-    wrangled_df = _wrangle_data_impute_biolevels_(wrangled_df)
+    wrangled_df = impute_biolevels(wrangled_df)
 
     # Remove irrelevant columns
-    wrangled_df = _wrangle_data_remove_irrelevant_columns_(wrangled_df, descriptor)
+    wrangled_df = remove_irrelevant_columns(wrangled_df, descriptor)
 
     # Remove constant columns
-    wrangled_df = _wrangle_data_remove_constant_columns_(wrangled_df)
+    wrangled_df = remove_constant_columns(wrangled_df)
 
     # Reorder columns
-    wrangled_df = _wrangle_data_reorder_columns_(wrangled_df, descriptor)
+    wrangled_df = reorder_columns(wrangled_df, descriptor)
 
     return wrangled_df
 
-def extract_dense_dataframe(df, threshold):
-    """
-    Remove the columns that are less dense than a given threshold,
-    then remove the rows that contain missing values.
-
-    Args:
-        - df        : the input DataFrame
-        - threshold : the density threshold
-
-    Returns:
-        A dense DataFrame
-    """
-    df = df.copy()
-    sparse_columns = get_sparse_columns(df, threshold)
-    return df.drop(sparse_columns, axis=1).dropna()

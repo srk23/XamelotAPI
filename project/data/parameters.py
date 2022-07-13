@@ -99,7 +99,7 @@ LIMITS = [
       'creatinine_83', 'creatinine_84'}, (-1, 1000)),
 ]
 
-BMI_LIMITS = (5, 60)
+BMI_LIMITS = (10, 65)
 
 REFERENCES = [
     ({'rsex', 'dsex'},
@@ -437,8 +437,6 @@ BINARY_KEYS = {
     'Graft failure': 1,
     'Death of recipient': 1
 }
-
-
 
 def is_biolevel(column):
     """

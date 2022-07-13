@@ -5,7 +5,7 @@ import matplotlib.patches         as     phs
 from   matplotlib.ticker          import MaxNLocator
 import pandas                     as     pd
 
-from   project.data.wrangle       import extract_dense_dataframe
+from   project.data.embed         import extract_dense_dataframe
 from   project.misc.dataframes    import density
 from   project.misc.geometry      import get_distance_regarding_intersection, get_radius
 
@@ -144,7 +144,7 @@ def print_summary(df, descriptor):
             print('\n' + '#' * 50 + '\n')
 
 
-def plot_densities(df):
+def plot_densities(df, threshold=.5):
     """
     Display the bar plot of the densities of each column for a given DataFrame.
     """
@@ -159,11 +159,12 @@ def plot_densities(df):
     y = list(xy.values)
 
     # Define color scheme
-    colors = ['orange' if y_ == 1 else 'C0' if y_ > .5 else 'red' for y_ in y]
+    colors = ['orange' if y_ == 1 else 'C0' if y_ > threshold else 'red' for y_ in y]
 
     # Plot
     fig, ax = plt.subplots(figsize=(27, 9))
     ax.grid(visible=True, which='both', axis='y', zorder=0)
+    ax.set_yticks([.1 * i for i in range(11)])
     ax.bar(x, y, color=colors, zorder=3)
     fig.autofmt_xdate(rotation=90)
     plt.show()

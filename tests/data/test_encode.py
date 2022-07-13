@@ -15,7 +15,6 @@ DF1 = pd.DataFrame({"animal": ["Cow", "Happy chicken"], "legs": [4, 2], "weight"
 DF1["legs"] = DF1["legs"].astype("Int64", errors="raise")
 
 DF2 = pd.DataFrame({
-    "animal#Cow": [1, 0],
     "animal#Happy chicken": [0, 1],
     "legs": [1, 0],
     "weight": [1000, 1.7]

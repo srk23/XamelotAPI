@@ -13,11 +13,11 @@ from project.misc.dataframes import build_empty_mask, intersect_columns
 ###################
 
 # Set column names to lower case
-def _clean_data_columns_to_lower_case_(df):
+def set_columns_to_lower_case(df):
     return df.rename(str.lower, axis='columns')
 
 # Change type to handle non-float NaN
-def _clean_data_int64_(df):
+def change_int64(df):
     dtype = {
             column: 'Int64'
             for column in df.columns
@@ -26,13 +26,13 @@ def _clean_data_int64_(df):
     return df.astype(dtype)
 
 # Ensure type uniformity
-def _clean_data_type_uniformity_(df, heterogeneous_columns):
+def ensure_type_uniformity(df, heterogeneous_columns):
     columns_to_retype = intersect_columns(heterogeneous_columns, df)
     df[columns_to_retype] = df[columns_to_retype].applymap(str)
     return df
 
 # Change 'unknown values' to NaN
-def _clean_data_type_unknown_values_(df, mask, generic_unknowns, specific_unknowns):
+def correct_unknown_values(df, mask, generic_unknowns, specific_unknowns):
     mask |= (df.isin(generic_unknowns))
     for column, nan_values in specific_unknowns.items():
         if column in df.columns:
@@ -40,7 +40,7 @@ def _clean_data_type_unknown_values_(df, mask, generic_unknowns, specific_unknow
     return df, mask
 
 # Remove abnormal values (see 'limits' dict)
-def _clean_data_abnormal_values_(df, mask, limits):
+def remove_abnormal_values(df, mask, limits):
     for columns, minmax_values in limits:
         min_value, max_value = minmax_values
         columns_to_crop = intersect_columns(columns, df)
@@ -49,7 +49,7 @@ def _clean_data_abnormal_values_(df, mask, limits):
     return df, mask
 
 # Use category names instead of codes
-def _clean_data_categories_(df, references):
+def use_category_names(df, references):
     for columns, reference in references:
         def _remap_(value):
             if value in reference.keys():
@@ -96,24 +96,24 @@ def clean_data(
     clean_df = df.copy()
         
     # Set column names to lower case    
-    clean_df = _clean_data_columns_to_lower_case_(clean_df)
+    clean_df = set_columns_to_lower_case(clean_df)
                 
     # Change type to handle non-float NaN
-    clean_df = _clean_data_int64_(clean_df)
+    clean_df = change_int64(clean_df)
     
     # Ensure type uniformity
-    clean_df = _clean_data_type_uniformity_(clean_df, heterogeneous_columns)
+    clean_df = ensure_type_uniformity(clean_df, heterogeneous_columns)
     
     # Change 'unknown values' to NaN
     mask = build_empty_mask(clean_df)
-    clean_df, mask = _clean_data_type_unknown_values_(clean_df, mask, generic_unknowns, specific_unknowns)
+    clean_df, mask = correct_unknown_values(clean_df, mask, generic_unknowns, specific_unknowns)
     
     # Remove abnormal values (see 'limits' dict)
-    clean_df, mask = _clean_data_abnormal_values_(clean_df, mask, limits)
+    clean_df, mask = remove_abnormal_values(clean_df, mask, limits)
 
     clean_df = clean_df.mask(mask)
             
     # Use category names instead of codes
-    clean_df = _clean_data_categories_(clean_df, references)
+    clean_df = use_category_names(clean_df, references)
 
     return clean_df

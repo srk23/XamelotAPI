@@ -9,8 +9,7 @@ from project.data.wrangle       import build_min,              \
                                        get_constant_columns,   \
                                        get_irrelevant_columns, \
                                        get_sparse_columns,     \
-                                       wrangle_data,           \
-                                       extract_dense_dataframe
+                                       wrangle_data
 from project.misc.clinical      import compute_egfr
 from project.misc.miscellaneous import identity
 
@@ -153,7 +152,3 @@ DESCRIPTOR2.set_entry(Entry("dial_at_tx", tags="feature", binary_keys={"Yes": 0,
 
 def test_wrangle_data():
     assert wrangle_data(DF4, DESCRIPTOR2, limits_bmi=(0, 100)).equals(DF4_)
-
-def test_extract_dense_dataframe():
-    df = extract_dense_dataframe(DF2, .5)
-    assert df.equals(pd.DataFrame({'A' : [1, 0]}, dtype='object'))
