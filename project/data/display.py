@@ -6,9 +6,9 @@ from   matplotlib.ticker          import MaxNLocator
 import pandas                     as     pd
 
 from   project.data.embed         import extract_dense_dataframe
-from   project.misc.dataframes    import density
+from   project.misc.dataframes    import density, intersect_columns
 from   project.misc.geometry      import get_distance_regarding_intersection, get_radius
-
+from   project.misc.miscellaneous import get_var_name
 
 def print_whole_dataframe(df):
     with pd.option_context("display.max_rows", 1000):
@@ -209,6 +209,7 @@ def plot_thresholds(df, steps, row_yticks=(0, 40000, 5000), col_yticks=(0, 90, 1
     labs = [l.get_label() for l in lns]
     plt.legend(lns, labs, loc='lower left')
     plt.show()
+
 
 def plot_intersection(df1, df2, label1='Transplant', label2='Offering'):
     """
