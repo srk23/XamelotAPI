@@ -101,6 +101,15 @@ LIMITS = [
 
 BMI_LIMITS = (10, 65)
 
+# NOTE:
+# It you look at the existing calculators, usually the important distinction is between
+# whether primary renal disease is due to diabetes or not –
+#  we could also create a new binary variable for this if needed?
+# For ethnicity, the important distinction is usually
+# black(African - american) / non - black
+# (affects how easy someone is to match and their risk of renal disease),
+# and for transplant number usually first or subsequent.
+# Donor cause of death is usually categorised to CVA (stroke) or other.
 REFERENCES = [
     ({'rsex', 'dsex'},
      {
@@ -437,6 +446,24 @@ BINARY_KEYS = {
     'Graft failure': 1,
     'Death of recipient': 1
 }
+
+IRRELEVANT_CATEGORIES = {
+    'tx_type': [
+        'Double kidney',
+        'En-bloc kidney',
+        'Kidney & heart',
+        'Kidney & liver',
+        'Kidney & lung',
+        'Kidney & pancreas',
+        'Kidney & pancreas islet'
+    ],
+    'rhosp': [
+
+    ]
+}
+
+COLUMNS_WITH_UNKNOWNS = ["prd"]
+UNKNOWN = "Unknown"
 
 def is_biolevel(column):
     """

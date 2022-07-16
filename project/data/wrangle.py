@@ -4,7 +4,11 @@ import numpy  as np
 import pandas as pd
 
 from project.data.describe   import Entry
-from project.data.parameters import get_biolevel_columns, BMI_LIMITS
+from project.data.parameters import get_biolevel_columns,  \
+                                    BMI_LIMITS,            \
+                                    IRRELEVANT_CATEGORIES, \
+                                    COLUMNS_WITH_UNKNOWNS, \
+                                    UNKNOWN
 from project.misc.clinical   import compute_bmi, compute_egfr
 from project.misc.dataframes import density, intersect_columns
 
@@ -212,6 +216,20 @@ def impute_biolevels(df):
         columns_to_drop += columns
     return df.drop(columns=columns_to_drop)
 
+# Add an "Unknown" category
+def add_unknown_category(df, columns_with_unknowns=COLUMNS_WITH_UNKNOWNS, unknown=UNKNOWN):
+    df[columns_with_unknowns] = df[columns_with_unknowns].mask(df[columns_with_unknowns].isna(), unknown)
+
+    return df
+# Remove irrelevant_columns
+def remove_irrelevant_categories(df, irrelevant_categories=IRRELEVANT_CATEGORIES):
+    columns = intersect_columns(irrelevant_categories.keys(), df)
+
+    for column in columns:
+        df = df.drop(df[df[column].isin(irrelevant_categories[column])].index)
+
+    return df
+
 # Remove irrelevant columns
 def remove_irrelevant_columns(df, descriptor):
     return df.drop(columns=get_irrelevant_columns(df, descriptor))
@@ -283,7 +301,15 @@ def update_descriptor(descriptor, files="new"):
         tags="feature"
     ))
 
-def wrangle_data(df, descriptor, limits_bmi=BMI_LIMITS, files="new"):
+def wrangle_data(
+        df,
+        descriptor,
+        limits_bmi=BMI_LIMITS,
+        columns_with_unknowns=COLUMNS_WITH_UNKNOWNS,
+        unknown=UNKNOWN,
+        irrelevant_categories=IRRELEVANT_CATEGORIES,
+        files="new"
+):
     """
     Perform a more in-depth cleaning (wrangling) of the data.
     Assuming a basic cleaning of the data has already been performed, it:
@@ -319,6 +345,12 @@ def wrangle_data(df, descriptor, limits_bmi=BMI_LIMITS, files="new"):
     # Get trends, minimum, and maximum
     wrangled_df = impute_biolevels(wrangled_df)
 
+    #
+    add_unknown_category(df, columns_with_unknowns, unknown)
+
+    # Remove irrelevant categories
+    wrangled_df = remove_irrelevant_categories(wrangled_df, irrelevant_categories)
+
     # Remove irrelevant columns
     wrangled_df = remove_irrelevant_columns(wrangled_df, descriptor)
 
@@ -329,4 +361,3 @@ def wrangle_data(df, descriptor, limits_bmi=BMI_LIMITS, files="new"):
     wrangled_df = reorder_columns(wrangled_df, descriptor)
 
     return wrangled_df
-

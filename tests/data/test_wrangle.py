@@ -1,9 +1,6 @@
-import numpy as np
-import pandas as pd
-
-from project.data.describe import Entry, Descriptor
-from project.data.wrangle import *
-from project.misc.clinical import compute_egfr
+from project.data.describe      import Descriptor
+from project.data.wrangle       import *
+from project.misc.clinical      import compute_egfr
 from project.misc.miscellaneous import identity
 
 DF1 = pd.DataFrame(
@@ -244,6 +241,24 @@ def test_wrangle_data_impute_biolevels():
 
     assert target_df.equals(output_df)
 
+def test_wrangle_data_add_unknown_category():
+    input_df = pd.DataFrame({"a": ["A", pd.NA], "b": [pd.NA, "B"]})
+    output_df = add_unknown_category(input_df, columns_with_unknowns=['a'], unknown=42)
+    target_df = pd.DataFrame({"a": ["A", 42], "b": [pd.NA, "B"]})
+
+    assert output_df.equals(target_df)
+
+def test_wrangle_data_remove_irrelevant_categories():
+    irrelevant_categories = {
+        'a': ["B"],
+        'c': ["A"]
+    }
+
+    input_df  = pd.DataFrame({"a": ["A", "B"], "b": ["A", "B"]})
+    output_df = remove_irrelevant_categories(input_df, irrelevant_categories=irrelevant_categories)
+    target_df = pd.DataFrame({"a": ["A"], "b": ["A"]})
+
+    assert output_df.equals(target_df)
 
 def test_wrangle_data_remove_irrelevant_columns():
     input_df = pd.DataFrame({
