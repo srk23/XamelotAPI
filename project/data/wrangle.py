@@ -7,6 +7,7 @@ from project.data.describe   import Entry
 from project.data.parameters import get_biolevel_columns,  \
                                     BMI_LIMITS,            \
                                     IRRELEVANT_CATEGORIES, \
+                                    IRRELEVANT_COLUMNS,    \
                                     COLUMNS_WITH_UNKNOWNS, \
                                     UNKNOWN
 from project.misc.clinical   import compute_bmi, compute_egfr
@@ -127,8 +128,11 @@ def get_constant_columns(df):
     return df.columns[df.nunique() <= 1].to_list()
 
 
-def get_irrelevant_columns(df, descriptor):
-    return [column for column in df.columns if descriptor.get_entry(column).tags not in {"feature", "target"}]
+def get_irrelevant_columns(df, descriptor, additional_irrelevant_columns=IRRELEVANT_COLUMNS):
+    def _is_irrelevant_(column):
+        return descriptor.get_entry(column).tags not in {"feature", "target"} \
+               or column in additional_irrelevant_columns
+    return [column for column in df.columns if _is_irrelevant_(column)]
 
 
 def get_sparse_columns(df, threshold):
@@ -231,8 +235,9 @@ def remove_irrelevant_categories(df, irrelevant_categories=IRRELEVANT_CATEGORIES
     return df
 
 # Remove irrelevant columns
-def remove_irrelevant_columns(df, descriptor):
-    return df.drop(columns=get_irrelevant_columns(df, descriptor))
+def remove_irrelevant_columns(df, descriptor, additional_irrelevant_columns=IRRELEVANT_COLUMNS):
+    columns_to_drop = intersect_columns(get_irrelevant_columns(df, descriptor, additional_irrelevant_columns), df)
+    return df.drop(columns=columns_to_drop)
 
 # Remove constant columns
 def remove_constant_columns(df):
@@ -308,6 +313,7 @@ def wrangle_data(
         columns_with_unknowns=COLUMNS_WITH_UNKNOWNS,
         unknown=UNKNOWN,
         irrelevant_categories=IRRELEVANT_CATEGORIES,
+        additional_irrelevant_columns=IRRELEVANT_COLUMNS,
         files="new"
 ):
     """
@@ -345,14 +351,14 @@ def wrangle_data(
     # Get trends, minimum, and maximum
     wrangled_df = impute_biolevels(wrangled_df)
 
-    #
-    add_unknown_category(df, columns_with_unknowns, unknown)
+    # add unknown categories
+    wrangled_df = add_unknown_category(wrangled_df, columns_with_unknowns, unknown)
 
     # Remove irrelevant categories
     wrangled_df = remove_irrelevant_categories(wrangled_df, irrelevant_categories)
 
     # Remove irrelevant columns
-    wrangled_df = remove_irrelevant_columns(wrangled_df, descriptor)
+    wrangled_df = remove_irrelevant_columns(wrangled_df, descriptor, additional_irrelevant_columns)
 
     # Remove constant columns
     wrangled_df = remove_constant_columns(wrangled_df)

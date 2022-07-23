@@ -448,6 +448,11 @@ BINARY_KEYS = {
 }
 
 IRRELEVANT_CATEGORIES = {
+    'dcod': [
+        'Burns',
+        'Renal failure',
+        'Acute blood loss/hypovolaemia'
+    ],
     'tx_type': [
         'Double kidney',
         'En-bloc kidney',
@@ -461,6 +466,10 @@ IRRELEVANT_CATEGORIES = {
 
     ]
 }
+
+
+IRRELEVANT_COLUMNS = ['dhiv']
+
 
 COLUMNS_WITH_UNKNOWNS = ["prd"]
 UNKNOWN = "Unknown"

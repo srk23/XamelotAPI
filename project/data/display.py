@@ -6,9 +6,8 @@ from   matplotlib.ticker          import MaxNLocator
 import pandas                     as     pd
 
 from   project.data.embed         import extract_dense_dataframe
-from   project.misc.dataframes    import density, intersect_columns
+from   project.misc.dataframes    import density
 from   project.misc.geometry      import get_distance_regarding_intersection, get_radius
-from   project.misc.miscellaneous import get_var_name
 
 def print_whole_dataframe(df):
     with pd.option_context("display.max_rows", 1000):
@@ -194,8 +193,8 @@ def plot_thresholds(df, steps, row_yticks=(0, 40000, 5000), col_yticks=(0, 90, 1
     lns_row = ax_row.plot(thresholds, nrows, color="orange", label="rows")
     lns_col = ax_col.plot(thresholds, ncols, label="columns")
 
-    ax_row.grid(visible=True, which='both', zorder=0)
-    ax_col.grid(visible=True, which='both', zorder=0)
+    ax_row.grid(visible=True, which='both', zorder=0, color="orange" , alpha=.7)
+    ax_col.grid(visible=True, which='both', zorder=0, color="#1f77b4", alpha=.5)
 
     ax_row.set_yticks(range(*row_yticks))
     ax_col.set_yticks(range(*col_yticks))
