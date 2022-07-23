@@ -15,7 +15,7 @@ def split_dataset(df, fracs, main_target):
             extracted_df = df_.loc[df_[main_target] == value, :].sample(n=n)
             dfs.append(extracted_df)
         split_df = pd.concat(dfs).sample(frac=1)
-        
+
         df_ = df_.drop(index=split_df.index)
 
         splits.append(split_df)

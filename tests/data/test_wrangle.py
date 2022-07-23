@@ -70,7 +70,7 @@ def test_get_constant_columns():
 
 
 def test_get_irrelevant_columns():
-    assert get_irrelevant_columns(DF2, DESCRIPTOR1) == ['B']
+    assert get_irrelevant_columns(DF2, DESCRIPTOR1, additional_irrelevant_columns=['A']) == ['A', 'B']
 
 
 def test_get_sparse_columns():
