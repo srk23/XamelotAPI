@@ -82,9 +82,9 @@ def plot_histogram(column, df, descriptor, bins=100):
 
         # When the text values are too long to be displayed horizontally,
         # rotate them.
-        if column in {'dcod'}:
+        if column in {'dcod', 'prd'}:
             fig.autofmt_xdate(rotation=15)
-
+        plt.xticks(fontsize='xx-large')
         plt.bar(x, y)
 
     # Numerical data:
