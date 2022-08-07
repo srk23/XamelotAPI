@@ -1,11 +1,11 @@
-import pandas as pd
-from project.misc.dataframes import build_empty_mask, density, intersect_columns
+from project.misc.dataframes import *
 
 DF1 = pd.DataFrame({"a": [0, 0], "b": [pd.NA, 0], "c": [pd.NA, pd.NA]})
 DF2 = pd.DataFrame({"a": [], "b": [], "c": []})
+DF3 = pd.DataFrame({'A': [1, 0, pd.NA], 'B': [1, pd.NA, pd.NA], 'C': [pd.NA, pd.NA, pd.NA]})
 
 
-def test_build_enpty_mask():
+def test_build_empty_mask():
     assert build_empty_mask(DF1).equals(pd.DataFrame(
         {
             "a": [False, False],
@@ -24,3 +24,10 @@ def test_density():
 def test_intersect_columns():
     l  = ["a", "c", "e"]
     assert intersect_columns(l, DF2) == ["a", "c"]
+
+
+def test_get_constant_columns():
+    assert get_constant_columns(DF3) == ['B', 'C']
+
+def test_get_sparse_columns():
+    assert get_sparse_columns(DF3, .5) == ['B', 'C']

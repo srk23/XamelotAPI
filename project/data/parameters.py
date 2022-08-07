@@ -102,7 +102,7 @@ LIMITS = [
 BMI_LIMITS = (10, 65)
 
 # NOTE:
-# It you look at the existing calculators, usually the important distinction is between
+# If you look at the existing calculators, usually the important distinction is between
 # whether primary renal disease is due to diabetes or not –
 #  we could also create a new binary variable for this if needed?
 # For ethnicity, the important distinction is usually
@@ -473,6 +473,20 @@ IRRELEVANT_COLUMNS = ['dhiv']
 
 COLUMNS_WITH_UNKNOWNS = ["prd"]
 UNKNOWN = "Unknown"
+
+CLEAN_PARAMETERS = {
+    "heterogeneous_columns" : HETEROGENEOUS_COLUMNS,
+    "generic_unknowns"      : GENERIC_UNKNOWNS,
+    "specific_unknowns"     : SPECIFIC_UNKNOWNS,
+    "limits"                : LIMITS,
+    "references"            : REFERENCES,
+    "limits_bmi"            : BMI_LIMITS,
+    "columns_with_unknowns" : COLUMNS_WITH_UNKNOWNS,
+    "unknown"               : UNKNOWN,
+    "irrelevant_categories" : IRRELEVANT_CATEGORIES,
+    "additional_irrelevant_columns" : IRRELEVANT_COLUMNS,
+    "files"                 : "new"
+}
 
 def is_biolevel(column):
     """

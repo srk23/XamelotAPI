@@ -1,13 +1,16 @@
 # Allow to save and load data/descriptors.
-
+import json
 import pickle
 import re
 
 import pandas as pd
 
-from project.config import Configurator
-from project.data.describe import Entry, Descriptor
-from project.misc.miscellaneous import string_autotype
+from copy import deepcopy
+
+from project.config                  import Configurator
+from project.data.describe           import Entry, Descriptor
+from project.data.parameters_manager import CleanParametersManager
+from project.misc.miscellaneous      import identity, string_autotype
 
 
 def save_data(dataframes, config: Configurator, dump_name):
@@ -159,3 +162,36 @@ def save_descriptor(descriptor, config: Configurator, csv_name):
     f = open(config.description_dir + csv_name + ".csv", 'w')
     f.write(csv_content)
     f.close()
+
+def load_clean_parameters_manager(config: Configurator, json_name):
+    with open(config.parameters_dir + json_name + ".json") as parameters_json:
+        parameters = json.load(parameters_json)
+
+    cpm = CleanParametersManager(
+        heterogeneous_columns = parameters["HETEROGENEOUS_COLUMNS"],
+        generic_unknowns      = parameters["GENERIC_UNKNOWNS"],
+        specific_unknowns     = parameters["SPECIFIC_UNKNOWNS"],
+        limits                = parameters["LIMITS"],
+        bmi_limits            = parameters["BMI_LIMITS"],
+        references            = parameters["REFERENCES"],
+        binary_keys           = parameters["BINARY_KEYS"],
+        irrelevant_categories = parameters["IRRELEVANT_CATEGORIES"],
+        irrelevant_columns    = parameters["IRRELEVANT_COLUMNS"],
+        columns_with_unknowns = parameters["COLUMNS_WITH_UNKNOWNS"],
+        unknown               = parameters["UNKNOWN"]
+    )
+
+    # Since JSON does not handle int as keys, we need to do it "by hand".
+    typed_references = deepcopy(cpm.references)
+    for i, ref_group in enumerate(cpm.references):
+        _, reference = ref_group
+
+        for key in cpm.references[i][1].keys():
+            if  re.fullmatch("[0-9]+", key) and cpm.references[i][0][0] != 'mgrade':
+                adjust_type = int
+            else:
+                adjust_type = identity
+            typed_references[i][1][adjust_type(key)] = typed_references[i][1].pop(key)
+    cpm.references = typed_references
+
+    return cpm

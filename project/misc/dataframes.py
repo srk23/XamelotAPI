@@ -24,6 +24,12 @@ def intersect_columns(l, df):
     return [e for e in l if e in df.columns]
 
 
+def get_constant_columns(df):
+    return df.columns[df.nunique() <= 1].to_list()
+
+def get_sparse_columns(df, threshold):
+    return [column for column in df.columns if density(df, column) < threshold]
+
 #####################
 #      COMPARE      #
 #####################

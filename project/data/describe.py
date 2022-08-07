@@ -94,3 +94,64 @@ class Descriptor:
 
     def get_keys(self):
         return self.m_entries.keys()
+
+
+##################
+#      MISC      #
+##################
+
+# Update Descriptor according to wrangling
+def update_descriptor_after_wrangle(descriptor, files="new"):
+    """
+    Update a descriptor by adding the new columns introduced with `wrangle_data`.
+    """
+    for key in ['alt', 'ast', 'amylase', 'creatinine', 'degfr']:
+        descriptor.set_entry(Entry(
+            key + "_trend",
+            description="Trend for %s." % key,
+            files=files,
+            column_type="object",
+            is_categorical=True,
+            binary_keys="",
+            tags="feature"
+        ))
+
+        descriptor.set_entry(Entry(
+            key + "_min",
+            description="Minimum value for %s." % key,
+            files=files,
+            column_type="float32",
+            is_categorical=False,
+            binary_keys="",
+            tags="feature"
+        ))
+
+        descriptor.set_entry(Entry(
+            key + "_max",
+            description="Maximum value for %s." % key,
+            files=files,
+            column_type="float32",
+            is_categorical=False,
+            binary_keys="",
+            tags="feature"
+        ))
+
+    descriptor.set_entry(Entry(
+        "dial_type",
+        description="Tells the most recent type of dialysis regarding transplantation.",
+        files=files,
+        column_type="object",
+        is_categorical=True,
+        binary_keys="",
+        tags="feature"
+    ))
+
+    descriptor.set_entry(Entry(
+        "dial_days",
+        description="Tells how long the patient have been on dialysis.",
+        files=files,
+        column_type="float32",
+        is_categorical=False,
+        binary_keys="",
+        tags="feature"
+    ))

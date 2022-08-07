@@ -2,7 +2,7 @@
 
 from project.data.encode      import OneHotEncoder
 from project.data.standardize import standardize
-from project.data.wrangle     import get_sparse_columns
+from project.misc.dataframes  import get_sparse_columns
 
 ######################
 #      VISITORS      #
