@@ -1,8 +1,8 @@
 # Transform the data into a more ML-friendly shape.
 
-from project.data.encode      import OneHotEncoder
-from project.data.standardize import standardize
-from project.misc.dataframes  import get_sparse_columns
+from project.data.encode                import OneHotEncoder
+from project.misc.dataframes            import get_sparse_columns
+from project.data.survival_data_manager import SurvivalDataManager
 
 ######################
 #      VISITORS      #
@@ -16,22 +16,11 @@ class DefaultEmbedDataVisitor:
         threshold,
         descriptor,
         separator,
-        standardization_function,
-        standardize_target_duration
     ): pass
 
     def select_targets(self, df, target, descriptor): pass
 
     def extract_dense_dataframe(self, df, threshold): pass
-
-    def standardize_numerical_data(
-        self,
-        df,
-        target_duration,
-        descriptor,
-        standardization_function=standardize,
-        standardize_target_duration=False
-    ): pass
 
     def encode_categorical_data(self, df, descriptor, separator): pass
 
@@ -45,8 +34,6 @@ class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
         threshold,
         descriptor,
         separator,
-        standardization_function,
-        standardize_target_duration
     ):
         string_output  = "Starting embedding...\n"
         string_output += "\tBefore embedding, the dataset has {0} rows and {1} columns.".format(*df.shape)
@@ -65,7 +52,6 @@ class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
         string_output += "\tAt this point, the dataset has {0} rows and {1} columns.".format(*df.shape)
 
         print(string_output)
-
 
 
 ###################
@@ -113,33 +99,6 @@ def extract_dense_dataframe(df, threshold):
              .dropna()
 
 
-def standardize_numerical_data(
-        df,
-        target_duration,
-        descriptor,
-        standardization_function,
-        standardize_target_duration
-):
-    """
-    Given a DataFrame, standardize its numerical data.
-
-    Args:
-        - df     : the input DataFrame
-        - target : a pair of event and duration to focus on
-        - ohe    : OneHotEncoder (contains information about descriptor and separator)
-
-    Returns:
-        An "encoded" DataFrame, the One Hot Encoder
-    """
-
-    columns_to_standardize = [column for column in df.columns if descriptor.get_entry(column).is_numerical]
-    if not standardize_target_duration:
-        columns_to_standardize = list(set(columns_to_standardize) - {target_duration})
-
-    df[columns_to_standardize] = df[columns_to_standardize].apply(standardization_function)
-    return df
-
-
 def encode_categorical_data(df, descriptor, separator):
     """
     Build a One Hot Encoder and encode categorical data with it.
@@ -158,7 +117,7 @@ def encode_categorical_data(df, descriptor, separator):
 
 def convert_to_float32(df):
     """
-    Convert `dtypes` to 'float32 (because of Pytorch requirements).
+    Convert `dtypes` to 'float32' (because of Pytorch requirements).
     """
     return df.astype('float32')
 
@@ -168,8 +127,6 @@ def embed_data(
         threshold,
         descriptor,
         separator='#',
-        standardization_function=standardize,
-        standardize_target_duration=False,
         visitor=DefaultEmbedDataVisitor()
 ):
     """
@@ -179,8 +136,8 @@ def embed_data(
     - Remove unused targets;
     - Extract a dense DataFrame from the input one;
     - One Hot Encode categorical columns;
-    - Standardize numerical data;
     - Convert types to `float32`;
+    - Return a SurvivalDataManager
 
     Args:
         - df         : an input DataFrame
@@ -202,8 +159,6 @@ def embed_data(
         threshold,
         descriptor,
         separator,
-        standardization_function,
-        standardize_target_duration
     )
 
     df = select_targets(df, target, descriptor)
@@ -212,26 +167,10 @@ def embed_data(
     df = extract_dense_dataframe(df, threshold)
     visitor.extract_dense_dataframe(df, threshold)
 
-    _, target_duration = target
-    df = standardize_numerical_data(
-        df,
-        target_duration,
-        descriptor,
-        standardization_function,
-        standardize_target_duration
-    )
-    visitor.standardize_numerical_data(
-        df,
-        target_duration,
-        descriptor,
-        standardization_function,
-        standardize_target_duration
-    )
-
     df, ohe = encode_categorical_data(df, descriptor, separator)
     visitor.encode_categorical_data(df, descriptor, separator)
 
     df = convert_to_float32(df)
     visitor.convert_to_float32(df)
 
-    return df, ohe
+    return SurvivalDataManager(df, *target), ohe

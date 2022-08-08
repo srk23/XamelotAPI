@@ -275,10 +275,9 @@ def test_wrangle_data_remove_irrelevant_columns():
         'dsex': ["Male", "Male", "Male"],
         'dweight': [0.0, 1.0, 100.0],
         'dheight': [1.0, 100.0, 200.0],
-        'dbmi': [np.nan, np.nan, 25.0],
     })
 
-    cpm = CleanParametersManager(descriptor=DESCRIPTOR2, irrelevant_columns=[])
+    cpm = CleanParametersManager(descriptor=DESCRIPTOR2, irrelevant_columns=['dbmi'])
     output_df = remove_irrelevant_columns(input_df, cpm)
 
     assert target_df.equals(output_df)

@@ -3,10 +3,28 @@ import numpy  as np
 import pandas as pd
 
 from project.data.build      import build_egfr, build_max, build_min, build_easy_trend, build_binary_code
-from project.data.parameters import get_biolevel_columns
 
 from project.misc.clinical   import compute_bmi
 from project.misc.dataframes import build_empty_mask, intersect_columns, get_constant_columns
+
+
+def get_biolevel_columns(biolevel, df, temporal_columns_only=False):
+    """
+    Provides all the original columns corresponding to a given biological level (AST, creatinine, etc.).
+    """
+    idx     = [11, 12, 31, 32, 61, 62, 63, 71, 72, 73, 74, 75, 81, 82, 83, 84, 85]
+    columns = [biolevel + '_' + str(i) for i in idx]
+    if temporal_columns_only:
+        columns = columns[:7]
+    else:
+        if biolevel == "creatinine":
+            additional_column = ['dret_creat']
+        elif biolevel == "degfr":
+            additional_column = ['degfr']
+        else:
+            additional_column = list()
+        columns = additional_column + columns
+    return intersect_columns(columns, df)
 
 
 ############################
@@ -54,8 +72,8 @@ def remove_abnormal_values(df, cpm):
     for columns, minmax_values in cpm.limits:
         min_value, max_value = minmax_values
         columns_to_crop = intersect_columns(columns, df)
-        mask[columns_to_crop] |= df[columns_to_crop] < min_value
-        mask[columns_to_crop] |= df[columns_to_crop] > max_value
+        mask[columns_to_crop] |= df[columns_to_crop] <= min_value
+        mask[columns_to_crop] |= df[columns_to_crop] >= max_value
     return df.mask(mask)
 
 
@@ -222,6 +240,7 @@ CLEANING_STEPS = (
     impute_biolevels,
     add_unknown_category,
     remove_irrelevant_categories,
+    remove_irrelevant_columns,
     remove_constant_columns,
     reorder_columns
 )
