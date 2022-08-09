@@ -1,4 +1,6 @@
-# Functions to standardize numerical data
+# Functions to standardise numerical data
+import re
+
 def get_standardisation(sdm):
     return {
         "get_center" : lambda col: sdm.df[col].mean(),
@@ -15,23 +17,26 @@ class Standardiser:
     def __init__(
             self,
             sdm,
-            descriptor,
             get_center=lambda col: 0,
             get_scale =lambda col: 1,
             standardise_target_duration=False
     ):
-        self.m_descriptor = descriptor
-        self.m_columns_to_standardise = [
-            column for column in sdm.df.columns
-            if self.m_descriptor.get_entry(column).is_numerical
-        ]
+        descriptor = sdm.ohe.descriptor
+        separator  = sdm.ohe.separator
+
+        self.m_columns_to_standardise = list()
+        for column in sdm.df.columns:
+            if not re.findall(separator, column):
+                if descriptor.get_entry(column).is_numerical:
+                    self.m_columns_to_standardise.append(column)
+
         if not standardise_target_duration:
             self.m_columns_to_standardise = list(set(self.m_columns_to_standardise) - {sdm.duration_name})
 
         self.m_centers = {column: get_center(column) for column in self.m_columns_to_standardise}
         self.m_scales  = {column: get_scale(column)  for column in self.m_columns_to_standardise}
 
-    def standardise(self, sdm):
+    def __call__(self, sdm):
         def _standardise_(s):
             return (s - self.m_centers[s.name]) / self.m_scales[s.name]
 

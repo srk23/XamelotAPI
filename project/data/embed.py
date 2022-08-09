@@ -173,4 +173,4 @@ def embed_data(
     df = convert_to_float32(df)
     visitor.convert_to_float32(df)
 
-    return SurvivalDataManager(df, *target), ohe
+    return SurvivalDataManager(df, *target, ohe=ohe)

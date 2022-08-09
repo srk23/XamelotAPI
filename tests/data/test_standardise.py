@@ -31,11 +31,18 @@ DESCRIPTOR = Descriptor({
     )
 })
 
-SDM = SurvivalDataManager(DF, event="c", duration="t")
+class FakeOHE:
+    def __init__(self, descriptor):
+        self.descriptor = descriptor
+        self.separator  = "#"
+
+
+SDM = SurvivalDataManager(DF, event="c", duration="t", ohe=FakeOHE(DESCRIPTOR))
+
 
 def test_nothing():
-    standardiser = Standardiser(SDM, DESCRIPTOR)
-    standardised_sdm = standardiser.standardise(SDM)
+    standardiser = Standardiser(SDM)
+    standardised_sdm = standardiser(SDM)
 
     assert standardised_sdm.equals(SDM)
 
@@ -50,10 +57,11 @@ def test_standardisation():
         }
     ), event="c", duration="t")
 
-    S = Standardiser(SDM, DESCRIPTOR, **get_standardisation(SDM), standardise_target_duration=False)
-    standardised_sdm = S.standardise(SDM)
+    standardiser = Standardiser(SDM, **get_standardisation(SDM), standardise_target_duration=False)
+    standardised_sdm = standardiser(SDM)
 
     decimals = 15  # floats are badly handled, so we can't use `equals`.
+
     assert standardised_sdm.df.round(decimals).equals(sdm_.df.round(decimals)) \
            and standardised_sdm.event_name    == sdm_.event_name               \
            and standardised_sdm.duration_name == sdm_.duration_name
@@ -69,7 +77,7 @@ def test_normalisation():
         }
     ), event="c", duration="t")
 
-    standardiser = Standardiser(SDM, DESCRIPTOR, **get_normalisation(SDM), standardise_target_duration=False)
-    standardised_sdm = standardiser.standardise(SDM)
+    standardiser = Standardiser(SDM, **get_normalisation(SDM), standardise_target_duration=False)
+    standardised_sdm = standardiser(SDM)
 
     assert standardised_sdm.equals(sdm_)
