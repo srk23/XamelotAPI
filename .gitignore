@@ -2,7 +2,6 @@ build
 debian
 deb_dist
 dist
-pybgl.egg-info
 *.pyc
 *.swp
 *.swo
@@ -10,3 +9,4 @@ pybgl.egg-info
 .minifoldrc
 .pytest_cache
 .idea
+project.egg-info/
