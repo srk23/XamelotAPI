@@ -1,13 +1,19 @@
 # You will find here a bunch of useful but diverse functions.
+import numpy as np
 
 import inspect
 import re
+import torch
 
 def identity(x):
     """
     A simple function for identity
     """
     return x
+
+def set_seed(seed):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
 def get_var_name(var, depth=1):
     """
