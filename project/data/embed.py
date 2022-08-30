@@ -2,7 +2,7 @@
 
 from project.data.encode                import OneHotEncoder
 from project.misc.dataframes            import get_sparse_columns
-from project.data.survival_data_manager import SurvivalDataManager
+from project.data.datamanager import SurvivalDataManager
 
 ######################
 #      VISITORS      #

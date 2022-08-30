@@ -3,7 +3,7 @@ import pandas as pd
 
 from project.data.standardise import *
 from project.data.describe    import Entry, Descriptor
-from project.data.survival_data_manager import SurvivalDataManager
+from project.data.datamanager import SurvivalDataManager
 
 DF = pd.DataFrame({
     "x1": [4., 2.],
@@ -37,7 +37,8 @@ class FakeOHE:
         self.separator  = "#"
 
 
-SDM = SurvivalDataManager(DF, event="c", duration="t", ohe=FakeOHE(DESCRIPTOR))
+OHE = FakeOHE(DESCRIPTOR)
+SDM = SurvivalDataManager(DF, event="c", duration="t", ohe=OHE)
 
 
 def test_nothing():
@@ -75,7 +76,7 @@ def test_normalisation():
             "c" : [1  , 0  ],
             "t" : [10., 20.]
         }
-    ), event="c", duration="t")
+    ), event="c", duration="t", ohe=OHE)
 
     standardiser = Standardiser(SDM, **get_normalisation(SDM), standardise_target_duration=False)
     standardised_sdm = standardiser(SDM)
