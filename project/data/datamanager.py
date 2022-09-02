@@ -38,6 +38,10 @@ class DataManager:
     def df(self):
         return self.m_df
 
+    @df.setter
+    def df(self, new_df):
+        self.m_df = new_df
+
     @property
     def targets_list(self):
         return list(self.m_targets)
@@ -85,12 +89,9 @@ class DataManager:
         if not self.df.index.intersection(dm.df.index).empty:
             raise ValueError("Ensure that indexes do not overlap before concatenation.")
 
-        matcher = type(self).s_attribute_matcher
-        inputs = {'df': pd.concat([self.df, dm.df])}
-        for attribute, input_name in matcher.items():
-            inputs[input_name] = getattr(self, attribute)
-
-        return type(self)(**inputs)
+        output    = self.copy()
+        output.df = pd.concat([self.df, dm.df])
+        return output
 
     def split(self, fracs, target=None):
         reference_target = target if target else self.reference_target
@@ -100,11 +101,12 @@ class DataManager:
 
         splits = split_dataset(self.df, fracs, reference_target)
 
-        inputs = {
-            input_name: getattr(self, attribute)
-            for attribute, input_name in matcher.items()
-        }
-        return [type(self)(splitted_df, **inputs) for splitted_df in splits]
+        def _build_dm_(split):
+            output    = self.copy()
+            output.df = split
+            return output
+
+        return list(map(_build_dm_, splits))
 
 
 class SurvivalDataManager(DataManager):
