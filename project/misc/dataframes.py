@@ -1,7 +1,7 @@
 import pandas as pd
 
 from project.misc.miscellaneous import get_var_name
-
+from project.misc.list_operation import intersection
 
 def build_empty_mask(df):
     return pd.DataFrame(False, index=df.index, columns=df.columns)
@@ -21,7 +21,7 @@ def intersect_columns(l, df):
     Returns:
          - a list: intersection between `l` and `df.columns` (follows `l`' ordering).
     """
-    return [e for e in l if e in df.columns]
+    return intersection(l, df.columns)
 
 
 def get_constant_columns(df):
@@ -58,7 +58,7 @@ class Comparison:
         if self.m_differences == dict():
             string += "\n> They are equal."
         else:
-            for k, v in self.m_difference.items():
+            for k, v in self.m_differences.items():
                 string += "\n> {0}:\n".format(k)
                 for comment in v:
                     string += "\t- {0}\n".format(comment)

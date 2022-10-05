@@ -15,6 +15,7 @@ import sksurv.linear_model as sklin
 # from sksurv.ensemble     import RandomSurvivalForest as SksurvRSF
 import sksurv.ensemble     as skens
 
+
 #####################################
 #      MISCELLANEOUS FUNCTIONS      #
 #####################################
@@ -112,6 +113,7 @@ class ScikitCoxModel(FromTheShelfModel):
 
     def train(self, sdm_train, sdm_val, parameters=None):
         x, y = get_x_y(sdm_train.df, [sdm_train.event_name, sdm_train.duration_name], pos_label=1, survival=True)
+
         self.model.fit(x, y)
 
         return self.score(sdm_val)
@@ -121,9 +123,11 @@ class ScikitCoxModel(FromTheShelfModel):
         return -self.model.predict(covariates)
 
     def score(self, sdm):
+        x, _ = get_x_y(sdm.df, [sdm.event_name, sdm.duration_name], pos_label=1, survival=True)
+
         return concordance_index(
             sdm.durations,
-            -self.model.predict(sdm.covariates),
+            -self.model.predict(x),
             sdm.events
         )
 

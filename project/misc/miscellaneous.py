@@ -4,6 +4,7 @@ import numpy as np
 import inspect
 import re
 import torch
+import random
 
 def identity(x):
     """
@@ -12,8 +13,12 @@ def identity(x):
     return x
 
 def set_seed(seed):
+    random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def get_var_name(var, depth=1):
     """
