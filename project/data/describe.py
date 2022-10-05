@@ -66,20 +66,17 @@ class Entry:
     def __repr__(self):
         categorical = "categorical" if self.is_categorical else "numerical"
 
-        return """
-{0}: 
-    > {1}
-    > This column is {2} (type: {3})
-    > It belongs to files: {4}.
-    > It has been tagged as: {5}.
-""". format(
-            self.column,
-            self.description,
-            categorical,
-            self.type,
-            self.files,
-            self.tags
-        )
+        output  = "{0}:\n".format(self.column)
+        output += "\t> {0}\n".format(self.description)
+        output += "\t> This column is {0} (type: {1}).\n".format(categorical, self.type)
+        if self.is_binary:
+            maxl = max(list(map(len, self.binary_keys.keys())))
+            for k, v in self.binary_keys.items():
+                output += "\t\t> {0}{1} : {2}\n".format(k, " " * (maxl - len(k)), v)
+        output += "\t> It belongs to files: {0}.\n".format(self.files)
+        output += "\t> It has been tagged as: {0}.\n".format(self.tags)
+
+        return output
 
 
 class Descriptor:

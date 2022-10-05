@@ -58,7 +58,7 @@ def test_standardisation():
         }
     ), event="c", duration="t")
 
-    standardiser = Standardiser(SDM, **get_standardisation(SDM), standardise_target_duration=False)
+    standardiser = Standardiser(SDM, **get_standardisation(SDM))  # , standardise_target_duration=False)
     standardised_sdm = standardiser(SDM)
 
     decimals = 15  # floats are badly handled, so we can't use `equals`.
@@ -78,7 +78,7 @@ def test_normalisation():
         }
     ), event="c", duration="t", ohe=OHE)
 
-    standardiser = Standardiser(SDM, **get_normalisation(SDM), standardise_target_duration=False)
+    standardiser = Standardiser(SDM, **get_normalisation(SDM))  # , standardise_target_duration=False)
     standardised_sdm = standardiser(SDM)
 
     assert standardised_sdm.equals(sdm_)

@@ -16,30 +16,42 @@ def get_normalisation(sdm):
 class Standardiser:
     def __init__(
             self,
-            sdm,
+            dm,
             get_center=lambda col: 0,
             get_scale =lambda col: 1,
-            standardise_target_duration=False
+            # standardise_target_duration=False
     ):
-        descriptor = sdm.ohe.descriptor
-        separator  = sdm.ohe.separator
+        descriptor = dm.ohe.descriptor
+        separator  = dm.ohe.separator
 
         self.m_columns_to_standardise = list()
-        for column in sdm.df.columns:
+        for column in dm.features_list:  # dm.df.columns:
             if not re.findall(separator, column):
                 if descriptor.get_entry(column).is_numerical:
                     self.m_columns_to_standardise.append(column)
 
-        if not standardise_target_duration:
-            self.m_columns_to_standardise = list(set(self.m_columns_to_standardise) - {sdm.duration_name})
+        # if not standardise_target_duration:
+        #     self.m_columns_to_standardise = list(set(self.m_columns_to_standardise) - {sdm.duration_name})
 
         self.m_centers = {column: get_center(column) for column in self.m_columns_to_standardise}
         self.m_scales  = {column: get_scale(column)  for column in self.m_columns_to_standardise}
 
-    def __call__(self, sdm):
+        assert 0 not in self.m_scales.values(), "One or more columns are constant, inducing a division by zero."
+
+    def __call__(self, dm):
         def _standardise_(s):
             return (s - self.m_centers[s.name]) / self.m_scales[s.name]
 
-        output_sdm = sdm.copy()
-        output_sdm.df[self.m_columns_to_standardise] = output_sdm.df[self.m_columns_to_standardise].apply(_standardise_)
-        return output_sdm
+        output_dm = dm.copy()
+        output_dm.df[self.m_columns_to_standardise] = output_dm.df[self.m_columns_to_standardise].apply(_standardise_)
+
+        return output_dm
+
+    def undo(self, dm):
+        def _undo_(s):
+            return (s * self.m_scales[s.name]) + self.m_centers[s.name]
+
+        output_dm = dm.copy()
+        output_dm.df[self.m_columns_to_standardise] = output_dm.df[self.m_columns_to_standardise].apply(_undo_)
+        return output_dm
+
