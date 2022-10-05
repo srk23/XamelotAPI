@@ -2,7 +2,13 @@
 import numpy  as np
 import pandas as pd
 
-from project.data.build      import build_egfr, build_max, build_min, build_easy_trend, build_binary_code
+from project.data.build      import build_egfr,       \
+                                    build_max,        \
+                                    build_min,        \
+                                    build_easy_trend, \
+                                    build_binary_code,\
+                                    build_mcens,      \
+                                    build_msurv
 
 from project.misc.clinical   import compute_bmi
 from project.misc.dataframes import build_empty_mask, intersect_columns, get_constant_columns
@@ -175,6 +181,46 @@ def impute_biolevels(df, cpm=None):
     return df.drop(columns=columns_to_drop)
 
 
+def replace(df, cpm):
+    for old_col, new_col in cpm.replacement_pairs:
+        df = df.drop(columns=old_col) \
+            .rename(columns={new_col: old_col})
+    return df
+
+
+def categorise(df, cpm):
+    columns_to_drop = list()
+    for key, cuts in cpm.columns_to_categorise.items():
+        col = "cat_" + key
+        df[col] = "before {0}".format(cuts[0])
+
+        for i in range(1, len(cuts)):
+            df[col] = df[col].mask(
+                (cuts[i - 1] <= df[key]) & (df[key] < cuts[i]),
+                "from {0} to {1}".format(cuts[i - 1], cuts[i])
+            )
+
+        df[col] = df[col].mask(cuts[-1] <= df[key], "after {0}".format(cuts[-1]))
+        columns_to_drop.append(key)
+    return df.drop(columns=columns_to_drop)
+
+
+def impute_multirisk(df, cpm=None):
+    def _booleanise_(x):
+        if pd.isna(x):
+            return pd.NA
+        if x == "Censored":
+            return False
+        return True
+
+    _ = cpm
+
+    df[['rdeath_bool', 'gcens_bool']] = df[['rdeath', 'gcens']].applymap(_booleanise_)
+    df['mcens'] = df.apply(lambda s: build_mcens(s, pcens="rdeath_bool", gcens="gcens_bool"), axis=1)
+    df['msurv'] = df.apply(build_msurv, axis=1)
+    return df.drop(columns=['rdeath_bool', 'gcens_bool'])
+
+
 # Add an "Unknown" category
 def add_unknown_category(df, cpm):
     df[cpm.columns_with_unknowns] = df[cpm.columns_with_unknowns].mask(
@@ -238,6 +284,9 @@ CLEANING_STEPS = (
     transform_dialysis_columns,
     recompute_egfr,
     impute_biolevels,
+    categorise,
+    impute_multirisk,
+    replace,
     add_unknown_category,
     remove_irrelevant_categories,
     remove_irrelevant_columns,

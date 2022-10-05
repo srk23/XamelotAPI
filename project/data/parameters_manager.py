@@ -1,3 +1,5 @@
+from project.misc.list_operation import union
+
 class CleanParametersManager:
     def __init__(
             self,
@@ -9,6 +11,8 @@ class CleanParametersManager:
             bmi_limits=None,
             references=None,
             binary_keys=None,
+            replacement_pairs=None,
+            columns_to_categorise=None,
             irrelevant_categories=None,
             irrelevant_columns=None,
             columns_with_unknowns=None,
@@ -22,6 +26,8 @@ class CleanParametersManager:
         self.m_bmi_limits            = bmi_limits
         self.m_references            = references
         self.m_binary_keys           = binary_keys
+        self.m_replacement_pairs     = replacement_pairs
+        self.m_columns_to_categorise = columns_to_categorise
         self.m_irrelevant_categories = irrelevant_categories
         self.m_irrelevant_columns    = irrelevant_columns
         self.m_columns_with_unknowns = columns_with_unknowns
@@ -72,6 +78,14 @@ class CleanParametersManager:
         self.m_binary_keys = binary_keys
 
     @property
+    def replacement_pairs(self):
+        return self.m_replacement_pairs
+
+    @property
+    def columns_to_categorise(self):
+        return self.m_columns_to_categorise
+
+    @property
     def irrelevant_categories(self):
         return self.m_irrelevant_categories
 
@@ -86,3 +100,34 @@ class CleanParametersManager:
     @property
     def unknown(self):
         return self.m_unknown
+
+class EncodeParametersManager:
+    def __init__(
+            self,
+            separator=None,
+            exceptions=None,
+            default_categories=None,
+    ):
+        self.m_separator          = separator
+        self.m_exceptions         = exceptions
+        self.m_default_categories = default_categories
+
+    @property
+    def separator(self):
+        return self.m_separator
+
+    @property
+    def exceptions(self):
+        return self.m_exceptions
+
+    @property
+    def default_categories(self):
+        return self.m_default_categories
+
+    def add_exceptions(self, exceptions):
+        # Allows to handle single exceptions without bothering wrapping them into a list
+        if type(exceptions) == str or not hasattr(exceptions, '__iter__'):
+            exceptions = [exceptions]
+
+        self.m_exceptions = union(self.m_exceptions, exceptions)
+

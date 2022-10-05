@@ -1,7 +1,8 @@
 # Transform the data into a more ML-friendly shape.
+import pandas as pd
 
-from project.data.encode                import OneHotEncoder
-from project.misc.dataframes            import get_sparse_columns
+from project.data.encode      import OneHotEncoder
+from project.misc.dataframes  import get_sparse_columns
 from project.data.datamanager import SurvivalDataManager
 
 ######################
@@ -15,14 +16,14 @@ class DefaultEmbedDataVisitor:
         target,
         threshold,
         descriptor,
-        separator,
+        encode_parameters_manager,
     ): pass
 
-    def select_targets(self, df, target, descriptor): pass
+    def select_targets(self, df, target, encode_parameters_manager): pass
 
     def extract_dense_dataframe(self, df, threshold): pass
 
-    def encode_categorical_data(self, df, descriptor, separator): pass
+    def encode_categorical_data(self, df, descriptor, encode_parameters_manager): pass
 
     def convert_to_float32(self, df): pass
 
@@ -33,7 +34,7 @@ class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
         target,
         threshold,
         descriptor,
-        separator,
+        encode_parameters_manager,
     ):
         string_output  = "Starting embedding...\n"
         string_output += "\tBefore embedding, the dataset has {0} rows and {1} columns.".format(*df.shape)
@@ -99,7 +100,7 @@ def extract_dense_dataframe(df, threshold):
              .dropna()
 
 
-def encode_categorical_data(df, descriptor, separator):
+def encode_categorical_data(df, descriptor, encode_parameters_manager):
     """
     Build a One Hot Encoder and encode categorical data with it.
 
@@ -111,9 +112,40 @@ def encode_categorical_data(df, descriptor, separator):
     Returns:
         An "encoded" DataFrame, the One Hot Encoder
     """
-    ohe = OneHotEncoder(descriptor, separator=separator)
+    ohe = OneHotEncoder(
+        descriptor,
+        separator=encode_parameters_manager.separator,
+        exceptions=encode_parameters_manager.exceptions,
+        default_categories=encode_parameters_manager.default_categories
+    )
     return ohe.encode(df), ohe
 
+
+def numerise_events(df, descriptor, target):
+    event, duration = target
+    entry = descriptor.get_entry(event)
+    if entry.is_binary:
+        for k, v in entry.binary_keys.items():
+            df.loc[df[event] == k, event] = v
+        df[event] = df[event].astype('int64')
+    else:
+        if event != 'mcens':
+            print("WARNING: unfinished code :O")
+
+        def _f_(s):
+            d = {
+                "Alive with functionning graft": 0,
+                "Alive with graft failure"     : 1,
+                "Deceased"                     : 2
+            }
+            for event_type, numerical_value in d.items():
+                if s[event] == event_type:
+                    return numerical_value
+                return pd.NA
+
+        df[event] = df[[event]].apply(_f_, axis=1)
+        df          = df.dropna(subset=[event, duration]).astype({event: 'int64'})
+    return df
 
 def convert_to_float32(df):
     """
@@ -126,7 +158,7 @@ def embed_data(
         target,
         threshold,
         descriptor,
-        separator='#',
+        encode_parameters_manager,
         visitor=DefaultEmbedDataVisitor()
 ):
     """
@@ -158,17 +190,19 @@ def embed_data(
         target,
         threshold,
         descriptor,
-        separator,
+        encode_parameters_manager,
     )
-
     df = select_targets(df, target, descriptor)
     visitor.select_targets(df, target, descriptor)
 
     df = extract_dense_dataframe(df, threshold)
     visitor.extract_dense_dataframe(df, threshold)
 
-    df, ohe = encode_categorical_data(df, descriptor, separator)
-    visitor.encode_categorical_data(df, descriptor, separator)
+    encode_parameters_manager.add_exceptions(target[0])
+    df, ohe = encode_categorical_data(df, descriptor, encode_parameters_manager)
+    visitor.encode_categorical_data(df, descriptor, encode_parameters_manager)
+
+    df = numerise_events(df, descriptor, target)
 
     df = convert_to_float32(df)
     visitor.convert_to_float32(df)

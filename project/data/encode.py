@@ -8,10 +8,11 @@ from project.misc.miscellaneous import string_autotype
 
 
 class OneHotEncoder:
-    def __init__(self, descriptor: Descriptor, separator="#"):
-        self.m_descriptor     = descriptor
-        self.m_sep            = separator
-        self.m_default_values = dict()
+    def __init__(self, descriptor: Descriptor, separator="#", exceptions=(), default_categories=None):
+        self.m_descriptor         = descriptor
+        self.m_sep                = separator
+        self.m_exceptions         = exceptions
+        self.m_default_categories = default_categories if default_categories is not None else dict()
 
     @property
     def descriptor(self):
@@ -21,11 +22,15 @@ class OneHotEncoder:
     def separator(self):
         return self.m_sep
 
+    @property
+    def exceptions(self):
+        return self.m_exceptions
+
     def is_encoded(self, column):
-        return self.m_sep in column
+        return self.separator in column
 
     def split(self, column):
-        return re.split(self.m_sep, column)
+        return re.split(self.separator, column)
 
     def encode(self, df):
         encoded_df = df.copy()
@@ -35,20 +40,23 @@ class OneHotEncoder:
 
         for column in encoded_df.columns:
             entry = self.descriptor.get_entry(column)
-            if entry.is_categorical:
+            if entry.is_categorical and column not in self.exceptions:
                 if not entry.is_binary:
-                    # The first observed category will be considered as a "default value".
+                    # If not specified, the first observed category will be considered as a "default value".
                     # A pure one hot encoding would indeed induce some singularity in the data.
                     # In other words, the corresponding matrix would not be invertible in that case.
                     # Indeed, the first column can be seen as a linear combination of the other ones.
                     # Therefore, we need to prevent its construction.
-                    first_value = True
+                    if column not in self.m_default_categories.keys():
+                        default_category_not_defined_yet = True
+                    else:
+                        default_category_not_defined_yet = False
                     for category in encoded_df[column].value_counts().index:
-                        if first_value:
-                            self.m_default_values[column] = str(category)
-                            first_value = False
-                        else:
-                            new_column = column + self.m_sep + str(category)
+                        if default_category_not_defined_yet:
+                            self.m_default_categories[column] = str(category)
+                            default_category_not_defined_yet  = False
+                        elif str(category) != self.m_default_categories[column]:
+                            new_column = column + self.separator + str(category)
 
                             # To prevent performance issues, we do not add encoded columns
                             # into encoded_df one by one;
@@ -85,7 +93,7 @@ class OneHotEncoder:
 
                 # If it is the first time the column is observed, we place the default value everywhere.
                 if old_column not in decoded_df.columns:
-                    decoded_df[old_column] = adjust_type(self.m_default_values[old_column])
+                    decoded_df[old_column] = adjust_type(self.m_default_categories[old_column])
                     idx_cols.append(old_column)
 
                 decoded_df[old_column].mask(decoded_df[column] == 1, other=adjust_type(category), inplace=True)

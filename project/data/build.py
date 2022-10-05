@@ -67,3 +67,39 @@ def build_binary_code(df, columns, is_positive_or_negative):
         s.mask(binary_column == 0, s + 2 * (3 ** order), inplace=True)
         s.mask(binary_column == 1, s + 1 * (3 ** order), inplace=True)
     return s
+
+
+def build_mcens(
+        s,
+        psurv="psurv",
+        pcens="rdeath",
+        gsurv="gsurv",
+        gcens="gcens"
+):
+    if pd.notna(s[psurv]) \
+            and pd.notna(s[gsurv]) \
+            and pd.notna(s[pcens]) \
+            and pd.notna(s[gcens]):
+        # If graft event comes first,
+        # or graft and death events are simultaneous,
+        # but death event is censored:
+        if s[gsurv] < s[psurv] \
+                or (s[gsurv] == s[psurv] and not s[pcens]):
+            if s[gcens]:  # Graft failure
+                return "Alive with graft failure"
+            else:  # Censored
+                return "Alive with functionning graft"
+        else:  # Death gets priority
+            if s[pcens]:
+                return "Deceased"
+            else:
+                return "Alive with functionning graft"
+    else:
+        return "Unknown"
+
+
+def build_msurv(s, columns=("psurv", "gsurv")):
+    psurv, gsurv = columns
+    if pd.notna(s[psurv]) and pd.notna(s[gsurv]):
+        return min(s[psurv], s[gsurv])
+    return pd.NA

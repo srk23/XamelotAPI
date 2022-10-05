@@ -37,6 +37,12 @@ DF5 = pd.DataFrame({
     'amylase_11': [1.0, 1.0, 1.0],
     'amylase_81': [0.0, 5.0, 1.0]
 })
+DF6 = pd.DataFrame({
+    "rdeath": ["Event"   , "Event", "Censored", "Event", "Censored", "Censored", "Event"   ],
+    "psurv" : [1         , 1      , 0         , 0      , 0         , 0         , 0         ],
+    "gcens" : ["Censored", "Event", "Event"   , "Event", "Censored", "Event"   , "Censored"],
+    "gsurv" : [0         , 0      , 1         , 1      , 0         , 0         , 0         ]
+})
 
 DESCRIPTOR1 = Descriptor(
     [
@@ -60,11 +66,11 @@ DESCRIPTOR2.set_entry(Entry("dial_at_tx", tags="feature", binary_keys={"Yes": 0,
 ###################
 
 
-def test_clean_data_columns_to_lower_case():
+def test_columns_to_lower_case():
     assert (set_columns_to_lower_case(DF1).columns == ['upper', 'lower']).all()
 
 
-def test_clean_data_int64():
+def test_int64():
     L = ['Int64', 'float64']
     L_ = change_int64(DF1).dtypes.to_list()
 
@@ -73,7 +79,7 @@ def test_clean_data_int64():
         assert l == l_
 
 
-def test_clean_data_type_uniformity():
+def test_type_uniformity():
     DF = pd.DataFrame({
         'col1': pd.Series([1, 2]),
         'col2': pd.Series(["1", "2"], dtype="object")
@@ -85,7 +91,7 @@ def test_clean_data_type_uniformity():
     assert (DF_.dtypes == DF.dtypes).all()
 
 
-def test_clean_data_type_unknown_values():
+def test_type_unknown_values():
     df2  = DF2.copy()
     mask = pd.DataFrame({'col1': [True, True], 'col2': [False, True]})
     df   = df2.mask(mask)
@@ -99,7 +105,7 @@ def test_clean_data_type_unknown_values():
     assert df.equals(df_)
 
 
-def test_clean_data_abnormal_values():
+def test_abnormal_values():
     df2  = DF2.copy()
     mask = pd.DataFrame({'col1': [False, True], 'col2': [False, False]})
     df   = df2.mask(mask)
@@ -110,7 +116,7 @@ def test_clean_data_abnormal_values():
     assert (df.equals(df_))
 
 
-def test_clean_data_categories():
+def test_categories():
     refs = [
         (
             {'col1'},
@@ -141,7 +147,7 @@ def test_clean_data_categories():
 #####################
 
 
-def test_wrangle_data_impute_bmi():
+def test_impute_bmi():
     input_df = pd.DataFrame({
         'dweight': [0.0, 1.0, 100.0],
         'dheight': [1.0, 100.0, 200.0],
@@ -165,7 +171,7 @@ def test_wrangle_data_impute_bmi():
     assert target_df.equals(output_df)
 
 
-def test_wrangle_data_transform_dialysis_columns():
+def test_transform_dialysis_columns():
     input_df = pd.DataFrame({
         'dial_at_reg': [pd.NA, "Not on dialysis", "B"],
         'dial_at_tx': [pd.NA, "No", "Yes"],
@@ -183,7 +189,7 @@ def test_wrangle_data_transform_dialysis_columns():
     assert target_df.equals(output_df)
 
 
-def test_wrangle_data_recompute_egfr():
+def test_recompute_egfr():
     input_df = pd.DataFrame({
         'dsex': ["Male", "Male", "Male"],
         'dheight': [np.nan, 100.0, 200.0],
@@ -205,7 +211,7 @@ def test_wrangle_data_recompute_egfr():
     assert target_df.equals(output_df)
 
 
-def test_wrangle_data_impute_biolevels():
+def test_impute_biolevels():
     input_df = pd.DataFrame({
         'creatinine_11': [np.nan, np.nan, 90.0],
         'degfr_11': [42.0, np.nan, 100.0],
@@ -240,14 +246,57 @@ def test_wrangle_data_impute_biolevels():
 
     assert target_df.equals(output_df)
 
-def test_wrangle_data_add_unknown_category():
+def test_replace():
+    cpm = CleanParametersManager(replacement_pairs=[['LoWEr', 'uppER']])
+
+    df_target   = pd.DataFrame({'LoWEr': [1, 2]})
+    df_obtained = replace(DF1, cpm)
+
+    assert df_obtained.equals(df_target)
+
+def test_categorise():
+    cpm = CleanParametersManager(columns_to_categorise={
+        "rweight": [0, 5]
+    })
+
+    df_target = pd.DataFrame({
+        'rweight': [
+            "from 0 to 5",
+            "after 5",
+            "before 0"
+        ]
+    })
+    df_obtained = categorise(DF5, cpm)
+
+    assert df_obtained["cat_rweight"].equals(df_target["rweight"])
+
+def test_impute_multirisk():
+    df_target = pd.DataFrame({
+        'mcens':
+            [
+                "Alive with functionning graft",
+                "Alive with graft failure",
+                "Alive with functionning graft",
+                "Deceased",
+                "Alive with functionning graft",
+                "Alive with graft failure",
+                "Deceased"
+            ],
+        'msurv':
+            [0] * 7
+    })
+    df_obtained = impute_multirisk(DF6)
+
+    assert df_obtained[['mcens', 'msurv']].equals(df_target)
+
+def test_add_unknown_category():
     input_df = pd.DataFrame({"a": ["A", pd.NA], "b": [pd.NA, "B"]})
     output_df = add_unknown_category(input_df, CleanParametersManager(columns_with_unknowns=['a'], unknown=42))
     target_df = pd.DataFrame({"a": ["A", 42], "b": [pd.NA, "B"]})
 
     assert output_df.equals(target_df)
 
-def test_wrangle_data_remove_irrelevant_categories():
+def test_remove_irrelevant_categories():
     irrelevant_categories = {
         'a': ["B"],
         'c': ["A"]
@@ -260,7 +309,7 @@ def test_wrangle_data_remove_irrelevant_categories():
 
     assert output_df.equals(target_df)
 
-def test_wrangle_data_remove_irrelevant_columns():
+def test_remove_irrelevant_columns():
     input_df = pd.DataFrame({
         'irrelevant': [53147, 36278, 14526],
         'dage': [18.0, 18.0, 18.0],
@@ -283,7 +332,7 @@ def test_wrangle_data_remove_irrelevant_columns():
     assert target_df.equals(output_df)
 
 
-def test_wrangle_data_remove_constant_columns():
+def test_remove_constant_columns():
     input_df = pd.DataFrame({
         'constant1': [11111, 11111, 11111],
         'constant2': [11111, pd.NA, 11111],

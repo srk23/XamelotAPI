@@ -9,7 +9,7 @@ from copy import deepcopy
 
 from project.config                  import Configurator
 from project.data.describe           import Entry, Descriptor
-from project.data.parameters_manager import CleanParametersManager
+from project.data.parameters_manager import CleanParametersManager, EncodeParametersManager
 from project.misc.miscellaneous      import identity, string_autotype
 
 
@@ -175,6 +175,8 @@ def load_clean_parameters_manager(config: Configurator, json_name):
         bmi_limits            = parameters["BMI_LIMITS"],
         references            = parameters["REFERENCES"],
         binary_keys           = parameters["BINARY_KEYS"],
+        replacement_pairs     = parameters["REPLACEMENT_PAIRS"],
+        columns_to_categorise = parameters["COLUMNS_TO_CATEGORISE"],
         irrelevant_categories = parameters["IRRELEVANT_CATEGORIES"],
         irrelevant_columns    = parameters["IRRELEVANT_COLUMNS"],
         columns_with_unknowns = parameters["COLUMNS_WITH_UNKNOWNS"],
@@ -195,3 +197,13 @@ def load_clean_parameters_manager(config: Configurator, json_name):
     cpm.references = typed_references
 
     return cpm
+
+def load_encode_parameters_manager(config: Configurator, json_name):
+    with open(config.parameters_dir + json_name + ".json") as parameters_json:
+        parameters = json.load(parameters_json)
+
+    return EncodeParametersManager(
+        separator          = parameters["SEPARATOR"],
+        exceptions         = parameters["EXCEPTIONS"],
+        default_categories = parameters["DEFAULT_CATEGORIES"],
+    )

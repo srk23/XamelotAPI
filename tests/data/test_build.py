@@ -16,6 +16,12 @@ DF6 = pd.DataFrame(
         'C': np.random.randn(9),
     })
 
+DF7 = pd.DataFrame({
+    "pcens": [True , True, False, True, False, False, True ],
+    "psurv": [1    , 1   , 0    , 0   , 0    , 0    , 0    ],
+    "gcens": [False, True, True , True, False, True , False],
+    "gsurv": [0    , 0   , 1    , 1   , 0    , 0    , 0    ]
+})
 
 def test_build_easy_trend():
     s = build_easy_trend(DF4, ['col_10', 'col_20'])
@@ -44,3 +50,26 @@ def test_build_binary_code():
     print(s)
     print(s_)
     assert s.equals(s_)
+
+def test_build_mcens():
+    s_target = pd.Series(
+        [
+            "Alive with functionning graft",
+            "Alive with graft failure"     ,
+            "Alive with functionning graft",
+            "Deceased"                     ,
+            "Alive with functionning graft",
+            "Alive with graft failure"     ,
+            "Deceased"
+        ]
+    )
+    s_obtained = DF7.apply(lambda s: build_mcens(s, pcens="pcens"), axis=1)
+
+    assert s_obtained.equals(s_target)
+
+def test_build_msurv():
+    s_target = pd.Series([0] * 7)
+    s_obtained = DF7.apply(build_msurv, axis=1)
+
+    assert s_obtained.equals(s_target)
+
