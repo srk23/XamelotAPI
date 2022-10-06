@@ -274,12 +274,12 @@ def test_impute_multirisk():
     df_target = pd.DataFrame({
         'mcens':
             [
-                "Alive with functionning graft",
-                "Alive with graft failure",
-                "Alive with functionning graft",
+                "Censored",
+                "Graft failure",
+                "Censored",
                 "Deceased",
-                "Alive with functionning graft",
-                "Alive with graft failure",
+                "Censored",
+                "Graft failure",
                 "Deceased"
             ],
         'msurv':

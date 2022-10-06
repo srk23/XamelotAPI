@@ -112,7 +112,7 @@ def load_descriptor(config: Configurator, csv_name):
 
             categorical_keys = {retype(categorical_keys[i]): i for i in range(len(categorical_keys))}
         else:
-            binary_keys = dict()
+            categorical_keys = dict()
 
         new_entry = Entry(
             column=row['variable'],

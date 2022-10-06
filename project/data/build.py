@@ -86,14 +86,14 @@ def build_mcens(
         if s[gsurv] < s[psurv] \
                 or (s[gsurv] == s[psurv] and not s[pcens]):
             if s[gcens]:  # Graft failure
-                return "Alive with graft failure"
+                return "Graft failure"
             else:  # Censored
-                return "Alive with functionning graft"
+                return "Censored"
         else:  # Death gets priority
             if s[pcens]:
                 return "Deceased"
             else:
-                return "Alive with functionning graft"
+                return "Censored"
     else:
         return "Unknown"
 

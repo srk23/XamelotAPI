@@ -54,12 +54,12 @@ def test_build_binary_code():
 def test_build_mcens():
     s_target = pd.Series(
         [
-            "Alive with functionning graft",
-            "Alive with graft failure"     ,
-            "Alive with functionning graft",
+            "Censored",
+            "Graft failure"     ,
+            "Censored",
             "Deceased"                     ,
-            "Alive with functionning graft",
-            "Alive with graft failure"     ,
+            "Censored",
+            "Graft failure"     ,
             "Deceased"
         ]
     )
