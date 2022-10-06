@@ -69,9 +69,9 @@ class OneHotEncoder:
                             idx_cols.append(new_column)
                     encoded_df.drop(columns=[column], inplace=True)
                 else:
-                    # Binary cases is an easy case: we can directly use the binary_keys references.
+                    # Binary cases is a specific case: we can directly use the categorical_keys references.
                     # In particular, there is no need to build new columns.
-                    for k, v in entry.binary_keys.items():
+                    for k, v in entry.categorical_keys.items():
                         encoded_df.loc[df[column] == k, column] = v
                     encoded_df[column] = encoded_df[column].astype('int64')
                     idx_cols.append(column)
@@ -103,7 +103,7 @@ class OneHotEncoder:
             else:
                 entry = self.m_descriptor.get_entry(column)
                 if entry.is_binary:
-                    for k, v in entry.binary_values.items():
+                    for k, v in entry.categorical_values.items():
                         decoded_df.loc[df[column] == k, column] = v
                     decoded_df[column] = decoded_df[column].astype('Int64')
 

@@ -103,14 +103,14 @@ def load_descriptor(config: Configurator, csv_name):
     for i in df.index:
         row = df.loc[i]
 
-        if not pd.isna(row['binary_keys']):
-            binary_keys = re.split(':', row['binary_keys'])
+        if not pd.isna(row['categorical_keys']):
+            categorical_keys = re.split(':', row['categorical_keys'])
 
             def retype(s):
                 adjust_type, _ = string_autotype(s)
                 return adjust_type(s)
 
-            binary_keys = {retype(binary_keys[i]): i for i in range(2)}
+            categorical_keys = {retype(categorical_keys[i]): i for i in range(len(categorical_keys))}
         else:
             binary_keys = dict()
 
@@ -120,7 +120,7 @@ def load_descriptor(config: Configurator, csv_name):
             files=row['files'],
             column_type=row['type'],
             is_categorical=row['is_categorical'],
-            binary_keys=binary_keys,
+            categorical_keys=categorical_keys,
             tags=row['tags']
         )
         descriptor.set_entry(new_entry)
@@ -139,11 +139,11 @@ def save_descriptor(descriptor, config: Configurator, csv_name):
 
     Returns: None.
     """
-    def _write_binary_keys_(binary_keys):
-        if binary_keys:
-            return '%s:%s' % tuple(binary_keys.keys())
+    def _write_categorical_keys_(categorical_keys):
+        if categorical_keys:
+            return ("%s:" * len(categorical_keys))[:-1] % tuple(categorical_keys.keys())
         else:
-            return ''
+            return ""
 
     csv_content = "variable,description,type,is_categorical,binary_keys,files,tags\n"
 
@@ -154,7 +154,7 @@ def save_descriptor(descriptor, config: Configurator, csv_name):
             entry.description,
             entry.type,
             str(entry.is_categorical).upper(),
-            _write_binary_keys_(entry.binary_keys),
+            _write_categorical_keys_(entry.categorical_keys),
             entry.files,
             entry.tags
         )

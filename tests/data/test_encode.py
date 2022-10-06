@@ -6,7 +6,7 @@ from project.data.encode   import OneHotEncoder
 DESCRIPTOR = Descriptor(
     [
         Entry("animal", is_categorical=True),
-        Entry("legs", is_categorical=True, binary_keys={2: 0, 4: 1}),
+        Entry("legs", is_categorical=True, categorical_keys={2: 0, 4: 1}),
         Entry("weight", is_categorical=False)
     ]
 )

@@ -125,7 +125,7 @@ def transform_dialysis_columns(df, cpm):
         "days_on_dial_tx": lambda x: 0 if x > 0 else 1,
         "dial_at_reg"    : lambda x: 1 if x == "Not on dialysis" else 0,
         "dial_at_tx_type": lambda x: 1 if x == "Not on dialysis" else 0,
-        "dial_at_tx"     : lambda x: cpm.descriptor.get_entry("dial_at_tx").binary_keys[x]
+        "dial_at_tx"     : lambda x: cpm.descriptor.get_entry("dial_at_tx").categorical_keys[x]
     }
     df["dial_code"] = build_binary_code(
         df,

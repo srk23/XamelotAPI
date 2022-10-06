@@ -8,7 +8,7 @@ class Entry:
             files="",
             column_type="",
             is_categorical=None,
-            binary_keys=None,
+            categorical_keys=None,
             tags=""
     ):
         self.m_column         = column
@@ -16,11 +16,11 @@ class Entry:
         self.m_files          = files
         self.m_type           = column_type
         self.m_is_categorical = is_categorical
-        self.m_binary_keys    = binary_keys
-        if binary_keys:
-            self.m_binary_vals = {v: k for (k, v) in binary_keys.items()}
+        self.m_categorical_keys = categorical_keys
+        if categorical_keys:
+            self.m_categorical_vals = {v: k for (k, v) in categorical_keys.items()}
         else:
-            self.m_binary_vals = None
+            self.m_categorical_vals = None
         self.m_tags           = tags
 
     @property
@@ -48,16 +48,18 @@ class Entry:
         return not self.m_is_categorical
 
     @property
-    def binary_keys(self):
-        return self.m_binary_keys
+    def categorical_keys(self):
+        return self.m_categorical_keys
 
     @property
-    def binary_values(self):
-        return self.m_binary_vals
+    def categorical_values(self):
+        return self.m_categorical_vals
 
     @property
     def is_binary(self):
-        return bool(self.m_binary_keys)
+        if bool(self.categorical_keys):
+            return len(self.categorical_keys) == 2
+        return False
 
     @property
     def tags(self):
@@ -70,8 +72,8 @@ class Entry:
         output += "\t> {0}\n".format(self.description)
         output += "\t> This column is {0} (type: {1}).\n".format(categorical, self.type)
         if self.is_binary:
-            maxl = max(list(map(len, self.binary_keys.keys())))
-            for k, v in self.binary_keys.items():
+            maxl = max(list(map(len, self.categorical_keys.keys())))
+            for k, v in self.categorical_keys.items():
                 output += "\t\t> {0}{1} : {2}\n".format(k, " " * (maxl - len(k)), v)
         output += "\t> It belongs to files: {0}.\n".format(self.files)
         output += "\t> It has been tagged as: {0}.\n".format(self.tags)
@@ -109,7 +111,7 @@ def update_descriptor_after_wrangle(descriptor, files="new"):
             files=files,
             column_type="object",
             is_categorical=True,
-            binary_keys="",
+            categorical_keys="",
             tags="feature"
         ))
 
@@ -119,7 +121,7 @@ def update_descriptor_after_wrangle(descriptor, files="new"):
             files=files,
             column_type="float32",
             is_categorical=False,
-            binary_keys="",
+            categorical_keys="",
             tags="feature"
         ))
 
@@ -129,7 +131,7 @@ def update_descriptor_after_wrangle(descriptor, files="new"):
             files=files,
             column_type="float32",
             is_categorical=False,
-            binary_keys="",
+            categorical_keys="",
             tags="feature"
         ))
 
@@ -139,7 +141,7 @@ def update_descriptor_after_wrangle(descriptor, files="new"):
         files=files,
         column_type="object",
         is_categorical=True,
-        binary_keys="",
+        categorical_keys="",
         tags="feature"
     ))
 
@@ -149,6 +151,6 @@ def update_descriptor_after_wrangle(descriptor, files="new"):
         files=files,
         column_type="float32",
         is_categorical=False,
-        binary_keys="",
+        categorical_keys="",
         tags="feature"
     ))

@@ -58,7 +58,7 @@ DESCRIPTOR2 = Descriptor(
     ]
 )
 DESCRIPTOR2.set_entry(Entry("irrelevant", tags="irrelevant"))
-DESCRIPTOR2.set_entry(Entry("dial_at_tx", tags="feature", binary_keys={"Yes": 0, "No": 1}))
+DESCRIPTOR2.set_entry(Entry("dial_at_tx", tags="feature", categorical_keys={"Yes": 0, "No": 1}))
 
 
 ###################
