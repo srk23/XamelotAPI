@@ -77,7 +77,7 @@ def plot_histogram(column, df, descriptor, bins=100):
         if entry.is_binary:
 
             x = x.to_list()
-            x.sort(reverse=False, key=lambda col: entry.binary_keys[col])
+            x.sort(reverse=False, key=lambda col: entry.categorical_keys[col])
             y = [c[value] for value in x]
 
         # When the text values are too long to be displayed horizontally,

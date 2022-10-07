@@ -10,7 +10,7 @@ class CleanParametersManager:
             limits=None,
             bmi_limits=None,
             references=None,
-            binary_keys=None,
+            categorical_keys=None,
             replacement_pairs=None,
             columns_to_categorise=None,
             irrelevant_categories=None,
@@ -25,7 +25,7 @@ class CleanParametersManager:
         self.m_limits                = limits
         self.m_bmi_limits            = bmi_limits
         self.m_references            = references
-        self.m_binary_keys           = binary_keys
+        self.m_categorical_keys      = categorical_keys
         self.m_replacement_pairs     = replacement_pairs
         self.m_columns_to_categorise = columns_to_categorise
         self.m_irrelevant_categories = irrelevant_categories
@@ -70,12 +70,12 @@ class CleanParametersManager:
         self.m_references = references
 
     @property
-    def binary_keys(self):
-        return self.m_binary_keys
+    def categorical_keys(self):
+        return self.m_categorical_keys
 
-    @binary_keys.setter
-    def binary_keys(self, binary_keys):
-        self.m_binary_keys = binary_keys
+    @categorical_keys.setter
+    def categorical_keys(self, categorical_keys):
+        self.m_categorical_keys = categorical_keys
 
     @property
     def replacement_pairs(self):
@@ -130,4 +130,3 @@ class EncodeParametersManager:
             exceptions = [exceptions]
 
         self.m_exceptions = union(self.m_exceptions, exceptions)
-

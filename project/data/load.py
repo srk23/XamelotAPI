@@ -1,4 +1,5 @@
-# Allow to save and load data/descriptors.
+# Allow to save and load various kind of data: datasets, parameters, descriptors, etc.
+
 import json
 import pickle
 import re
@@ -16,7 +17,8 @@ from project.misc.miscellaneous      import identity, string_autotype
 def save_data(dataframes, config: Configurator, dump_name):
     """
     Save data into a serialized DataFrame.
-    
+    Technically can save anything in the corresponding "dump" directory.
+
     Args:
         - dataframes: dataframes to save;
         - config    : Configurator managing project's paths;
@@ -31,18 +33,13 @@ def save_data(dataframes, config: Configurator, dump_name):
 
 def load_xlsx_data(config: Configurator, dump_name=""):
     """
-    Load original data for .xlsx files into Pandas DataFrames.
+    Load original data from .xlsx files into Pandas DataFrames.
     
     If specified, serialize and save these DataFrames locally.
-    For organization purposes, serialized DataFrames are stored in a directory 
-    called "Data" at the root of the project.
+    The place where serialized DataFrames are stored is specified by a Configurator.
     
     Args:
         - config    : Configurator managing project's paths;
-        - files     : a dictionary of shape {
-                                'offering'  : list({offering_filenames}),
-                                'transplant': list({transplant_filenames})
-                      };
         - dump_name : filename of the serialized DataFrames (no extension).
     
     Returns: similarly to files, return dictionary filled with the corresponding
@@ -68,22 +65,19 @@ def load_xlsx_data(config: Configurator, dump_name=""):
 
 def load_data(config: Configurator, dump_name):
     """
-    Load data from serialized DataFrames.
+    Load data from serialized DataFrame(s).
+    Technically can load any serialized item in the corresponding "dump" directory.
     
     Args:
         - config    : Configurator managing project's paths;
         - dump_name : filename of the serialized DataFrames (no extension).
     
-    Returns: a dictionary filled with DataFrames.
+    Returns: a dictionary filled with DataFrames or a DataFrame.
     """
-
-    # Load data (from serialized dataframes)
     file = open(config.dump_dir + dump_name + ".pkl", 'rb')
-    dataframes = pickle.load(file)
+    data = pickle.load(file)
     file.close()
-
-    # Focus on the most recent files
-    return dataframes
+    return data
 
 
 def load_descriptor(config: Configurator, csv_name):
@@ -145,7 +139,8 @@ def save_descriptor(descriptor, config: Configurator, csv_name):
         else:
             return ""
 
-    csv_content = "variable,description,type,is_categorical,binary_keys,files,tags\n"
+    # Build .csv content
+    csv_content = "variable,description,type,is_categorical,categorical_keys,files,tags\n"
 
     for key in descriptor.get_keys():
         entry = descriptor.get_entry(key)
@@ -159,14 +154,27 @@ def save_descriptor(descriptor, config: Configurator, csv_name):
             entry.tags
         )
 
+    # Write content into a file
     f = open(config.description_dir + csv_name + ".csv", 'w')
     f.write(csv_content)
     f.close()
 
 def load_clean_parameters_manager(config: Configurator, json_name):
+    """
+    Load parameters related to the cleaning step from a .json file.
+
+    Args:
+        - config    : Configurator managing project's paths;
+        - json_name : name of the .json file (no extension).
+
+    Returns:
+        A CleanParametersManager
+    """
+    # Load .json
     with open(config.parameters_dir + json_name + ".json") as parameters_json:
         parameters = json.load(parameters_json)
 
+    # Build CleanParametersManager
     cpm = CleanParametersManager(
         heterogeneous_columns = parameters["HETEROGENEOUS_COLUMNS"],
         generic_unknowns      = parameters["GENERIC_UNKNOWNS"],
@@ -174,7 +182,7 @@ def load_clean_parameters_manager(config: Configurator, json_name):
         limits                = parameters["LIMITS"],
         bmi_limits            = parameters["BMI_LIMITS"],
         references            = parameters["REFERENCES"],
-        binary_keys           = parameters["BINARY_KEYS"],
+        categorical_keys      = parameters["CATEGORICAL_KEYS"],
         replacement_pairs     = parameters["REPLACEMENT_PAIRS"],
         columns_to_categorise = parameters["COLUMNS_TO_CATEGORISE"],
         irrelevant_categories = parameters["IRRELEVANT_CATEGORIES"],
@@ -199,6 +207,16 @@ def load_clean_parameters_manager(config: Configurator, json_name):
     return cpm
 
 def load_encode_parameters_manager(config: Configurator, json_name):
+    """
+    Load parameters related to the encoding step from a .json file.
+
+    Args:
+        - config    : Configurator managing project's paths;
+        - json_name : name of the .json file (no extension).
+
+    Returns:
+        A EncodeParametersManager
+    """
     with open(config.parameters_dir + json_name + ".json") as parameters_json:
         parameters = json.load(parameters_json)
 
