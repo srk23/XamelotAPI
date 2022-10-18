@@ -11,7 +11,7 @@ from copy import deepcopy
 from project.config                  import Configurator
 from project.data.describe           import Entry, Descriptor
 from project.data.parameters_manager import CleanParametersManager, EncodeParametersManager
-from project.misc.miscellaneous      import identity, string_autotype
+from project.misc.misc      import identity, string_autotype
 
 
 def save_data(dataframes, config: Configurator, dump_name):

@@ -1,5 +1,5 @@
 from project.data.build         import *
-from project.misc.miscellaneous import identity
+from project.misc.misc import identity
 
 
 DF4 = pd.DataFrame(

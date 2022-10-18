@@ -1,5 +1,5 @@
 from project.data.split         import *
-from project.misc.miscellaneous import set_seed
+from project.misc.misc import set_seed
 
 S1 = pd.DataFrame({
     'x1': [1, 2, 1],

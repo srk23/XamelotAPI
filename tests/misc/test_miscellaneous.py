@@ -1,5 +1,5 @@
 from   numpy.random               import randn
-from   project.misc.miscellaneous import *
+from   project.misc.misc import *
 
 def test_identity():
     """

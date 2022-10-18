@@ -1,6 +1,6 @@
 import pandas as pd
 
-from project.misc.miscellaneous import get_var_name
+from project.misc.misc import get_var_name
 from project.misc.list_operation import intersection
 
 def build_empty_mask(df):
