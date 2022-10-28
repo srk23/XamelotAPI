@@ -1,4 +1,5 @@
 # You will find here a bunch of useful but diverse functions.
+
 import numpy as np
 
 import inspect
@@ -6,19 +7,22 @@ import re
 import torch
 import random
 
+
 def identity(x):
     """
     A simple function for identity
     """
     return x
 
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
+
 
 def get_var_name(var, depth=1):
     """
@@ -40,6 +44,7 @@ def get_var_name(var, depth=1):
     callers_local_vars = callers_local_vars.f_locals.items()
 
     return [var_name for var_name, var_val in callers_local_vars if var_val is var]
+
 
 def string_autotype(s):
     """

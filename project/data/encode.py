@@ -5,7 +5,6 @@ import re
 
 from project.data.describe      import Descriptor
 
-
 class OneHotEncoder:
     def __init__(self, descriptor: Descriptor, separator="#", exceptions=(), default_categories=None):
         self.m_descriptor         = descriptor
@@ -41,6 +40,7 @@ class OneHotEncoder:
         new_dfs = list()
 
         for column in encoded_df.columns:
+
             entry = self.descriptor.get_entry(column)
             if entry.is_categorical:
                 if column not in self.exceptions and not entry.is_binary:  # Then, one-hot encode.
@@ -75,14 +75,21 @@ class OneHotEncoder:
                     if entry.categorical_keys is not None:
                         categorical_keys = entry.categorical_keys
                     else:
-                        categorical_keys = {k: v for (v, k) in enumerate(df.value_counts().index)}
-                        self.m_categorical_values[column] = {v: k for (v, k) in enumerate(df.value_counts().index)}
+                        categorical_keys = {k: v for (v, k) in enumerate(encoded_df[column].value_counts().index)}
+                        self.m_categorical_values[column] = {
+                            v: k for (v, k) in enumerate(encoded_df[column].value_counts().index)
+                        }
 
                     def _replace_categories_(s):
                         try:
                             return categorical_keys[s[column]]
                         except KeyError:
                             return pd.NA
+                            # v = max(categorical_keys.values()) + 1
+                            # k = s[column]
+                            # categorical_keys[k] = v
+                            # self.m_categorical_values[column][v] = k
+                            # return v
 
                     encoded_df[column] = encoded_df[[column]].apply(_replace_categories_, axis=1)
                     idx_cols.append(column)
@@ -90,6 +97,7 @@ class OneHotEncoder:
                 idx_cols.append(column)
 
         encoded_df = pd.concat([encoded_df, *new_dfs], axis=1)
+
         return encoded_df.reindex(idx_cols, axis=1).astype('float32')
 
     def decode(self, df):

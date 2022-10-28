@@ -1,7 +1,7 @@
-from project.data.clean              import *
-from project.data.describe           import Entry, Descriptor
-from project.data.parameters_manager import CleanParametersManager
-from project.misc.clinical           import compute_egfr
+from project.data.clean    import *
+from project.data.describe import Entry, Descriptor
+from project.data.clean    import CleanParametersManager
+from project.misc.clinical import compute_egfr
 
 
 DF1 = pd.DataFrame({'uppER': [1, 2], 'LoWEr': [3, 4.5]})

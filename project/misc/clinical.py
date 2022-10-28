@@ -1,5 +1,7 @@
+# A set of clinical formulas.
+
 import numpy  as np
-import pandas as pd
+
 
 def compute_bmi(weight, height):
     return np.round(1e4 * weight / height ** 2, decimals=1)

@@ -1,5 +1,6 @@
-# Transform a continuous-time survival analysis problem into a discrete one.
+# Allow to transform a continuous-time column into a discrete one.
 # This transformation is sometimes required by models (e.g. DeepHit) where time values belong to a grid.
+
 import warnings
 
 import numpy        as     np
@@ -78,6 +79,16 @@ class Discretiser:
 
         return df_
 
+class DefaultDiscretiser(Discretiser):
+    """
+    Do nothing.
+    """
+    def __init__(self):
+        super().__init__([], "")
+
+    def __call__(self, df):
+        return df
+
 
 class EquidistantDiscretiser(Discretiser):
     """
@@ -92,9 +103,10 @@ class EquidistantDiscretiser(Discretiser):
         super().__init__(grid, accessor_code)
 
 
-class QuantileDiscretiser(Discretiser):
+class QuantilesDiscretiser(Discretiser):
     """
     Equivalent to discretising with PyCox under the `quantiles` scheme.
+    The implementation of the Kaplan-Meier is different though: it may result in different results.
     """
     def __init__(self, df, accessor_code, size_grid, disabled_warnings=True):
         context_manager = warnings.catch_warnings() if disabled_warnings else nullcontext()
@@ -155,7 +167,9 @@ class BalancedDiscretiser(Discretiser):
     def __init__(self, df, accessor_code, size_grid):
         def _find_cut_(targetted_value, values, times):
             """
-            Given
+            Choose the grid to ensure that data points are evenly spread on it.
+            To do so, the "quantiles" method has been adapted: instead of slicing the Kaplan-Meier estimator,
+            the cumulative count of survival times is used.
             """
             i_min = 0
             i_max = len(values) - 1

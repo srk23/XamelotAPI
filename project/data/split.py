@@ -1,7 +1,15 @@
+# Provide functions to split data.
+
 import numpy  as np
 import pandas as pd
 
+
 def split_dataset(df, fracs, main_target, random_states=(None, None)):
+    """
+    Split data in a stratified way.
+    Stratification is done regarding a column given as main target:
+    the label proportions in that column are preserverd across splits.
+    """
     df_ = df.copy()
     counts = df_[main_target].value_counts()
 

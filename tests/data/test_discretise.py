@@ -1,7 +1,7 @@
 import pandas as pd
 
 from project.data.discretise import *
-from project.data.accessor   import build_survival_accessor
+from project.data.dataframes   import build_survival_accessor
 
 ACCESSOR_CODE = "code"
 build_survival_accessor(
@@ -68,7 +68,7 @@ def test_quantiles():
     })
 
     # Home-made
-    discretiser = QuantileDiscretiser(
+    discretiser = QuantilesDiscretiser(
         df,
         accessor_code=ACCESSOR_CODE,
         size_grid=3

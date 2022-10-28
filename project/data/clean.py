@@ -10,21 +10,28 @@ from project.data.build      import build_egfr,       \
                                     build_binary_code,\
                                     build_mcens,      \
                                     build_msurv
+from project.data.dataframes import build_empty_mask, \
+                                    intersect_columns,\
+                                    get_constant_columns
 
 from project.misc.clinical   import compute_bmi
-from project.misc.dataframes import build_empty_mask, intersect_columns, get_constant_columns
+
+
+#############################
+#    AUXILIARY FUNCTIONS    #
+#############################
 
 
 def get_biolevel_columns(biolevel, df, temporal_columns_only=False):
     """
-    Provides all the original columns corresponding to a given biological level (AST, creatinine, etc.).
+        Provides all the original columns corresponding to a given biological level (AST, creatinine, etc.).
 
-    Args:
-        - biolevel              : a biolevel name
-        - df                    : a DataFrame
-        - temporal_columns_only : allow to only consider columns for which there is a temporal ordering (up to 63)
+        Args:
+            - biolevel              : a biolevel name
+            - df                    : a DataFrame
+            - temporal_columns_only : allow to only consider columns for which there is a temporal ordering (up to 63)
 
-    Returns: the list of all the columns corresponding to the investigated biolevel that are present in df.
+        Returns: the list of all the columns corresponding to the investigated biolevel that are present in df.
     """
     idx     = [11, 12, 31, 32, 61, 62, 63, 71, 72, 73, 74, 75, 81, 82, 83, 84, 85]
     columns = [biolevel + '_' + str(i) for i in idx]
@@ -424,11 +431,6 @@ def reorder_columns(df, cpm):
     return df[cols1 + cols2]
 
 
-###################
-#      CLEAN      #
-###################
-
-
 # The list of all the steps to perform.
 CLEANING_STEPS = (
     set_columns_to_lower_case,
@@ -450,6 +452,122 @@ CLEANING_STEPS = (
     remove_constant_columns,
     reorder_columns
 )
+
+
+############################
+#    PARAMETERS MANAGER    #
+############################
+
+
+class CleanParametersManager:
+    """
+    Allows to store and manage parameters for the 'clean_data' function.
+    It is more or less a dictionary.
+    """
+    def __init__(
+            self,
+            descriptor=None,
+            heterogeneous_columns=None,
+            generic_unknowns=None,
+            specific_unknowns=None,
+            limits=None,
+            bmi_limits=None,
+            references=None,
+            categorical_keys=None,
+            replacement_pairs=None,
+            columns_to_categorise=None,
+            irrelevant_categories=None,
+            irrelevant_columns=None,
+            columns_with_unknowns=None,
+            unknown=None
+    ):
+        self.m_descriptor            = descriptor
+        self.m_heterogeneous_columns = heterogeneous_columns
+        self.m_generic_unknowns      = generic_unknowns
+        self.m_specific_unknowns     = specific_unknowns
+        self.m_limits                = limits
+        self.m_bmi_limits            = bmi_limits
+        self.m_references            = references
+        self.m_categorical_keys      = categorical_keys
+        self.m_replacement_pairs     = replacement_pairs
+        self.m_columns_to_categorise = columns_to_categorise
+        self.m_irrelevant_categories = irrelevant_categories
+        self.m_irrelevant_columns    = irrelevant_columns
+        self.m_columns_with_unknowns = columns_with_unknowns
+        self.m_unknown               = unknown
+
+    @property
+    def descriptor(self):
+        return self.m_descriptor
+
+    @descriptor.setter
+    def descriptor(self, descriptor):
+        self.m_descriptor = descriptor
+
+    @property
+    def heterogeneous_columns(self):
+        return self.m_heterogeneous_columns
+
+    @property
+    def generic_unknowns(self):
+        return self.m_generic_unknowns
+
+    @property
+    def specific_unknowns(self):
+        return self.m_specific_unknowns
+
+    @property
+    def limits(self):
+        return self.m_limits
+
+    @property
+    def bmi_limits(self):
+        return self.m_bmi_limits
+
+    @property
+    def references(self):
+        return self.m_references
+
+    @references.setter
+    def references(self, references):
+        self.m_references = references
+
+    @property
+    def categorical_keys(self):
+        return self.m_categorical_keys
+
+    @categorical_keys.setter
+    def categorical_keys(self, categorical_keys):
+        self.m_categorical_keys = categorical_keys
+
+    @property
+    def replacement_pairs(self):
+        return self.m_replacement_pairs
+
+    @property
+    def columns_to_categorise(self):
+        return self.m_columns_to_categorise
+
+    @property
+    def irrelevant_categories(self):
+        return self.m_irrelevant_categories
+
+    @property
+    def irrelevant_columns(self):
+        return self.m_irrelevant_columns
+
+    @property
+    def columns_with_unknowns(self):
+        return self.m_columns_with_unknowns
+
+    @property
+    def unknown(self):
+        return self.m_unknown
+
+
+###################
+#      CLEAN      #
+###################
 
 
 def clean_data(

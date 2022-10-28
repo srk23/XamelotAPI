@@ -1,13 +1,80 @@
 # Transform the data into a ML-ready shape.
 
 from project.data.encode         import OneHotEncoder
-from project.misc.dataframes     import get_sparse_columns
-from project.misc.list_operation import difference
+from project.data.dataframes     import get_sparse_columns
+from project.misc.lists import difference, union
+
+
+############################
+#     EMBEDDING STEPS      #
+############################
+
+
+def select_targets(df, accessor_code, descriptor):
+    """
+    Remove any row with any unknown target. Unused targets are removed.
+
+    Args:
+        - df            : the input DataFrame;
+        - accessor_code : a code that points to an accessor of df;
+        - descriptor    : a Descriptor.
+
+    Returns:
+        A DataFrame with all targets but the one mentionned dropped ;
+        any row that contains missing value regarding the selected target is dropped as well.
+    """
+    target_to_focus   = getattr(df, accessor_code).target
+    targets_to_ignore = difference(
+        [column for column in df.columns if descriptor.get_entry(column).tags == "target"],
+        target_to_focus
+    )
+
+    return df.drop(columns=targets_to_ignore) \
+             .dropna(axis=0, subset=target_to_focus, how='any')
+
+def extract_dense_dataframe(df, threshold):
+    """
+    Remove the columns that are less dense than a given threshold,
+    then, remove the rows that contain missing values.
+
+    Args:
+        - df        : the input DataFrame;
+        - threshold : the density threshold.
+
+    Returns:
+        A dense DataFrame.
+    """
+    sparse_columns = get_sparse_columns(df, threshold)
+    return df.drop(columns=sparse_columns) \
+             .dropna()
+
+
+def encode_categorical_data(df, descriptor, encode_parameters_manager):
+    """
+    Build a One Hot Encoder and encode categorical data with it.
+
+    Args:
+        - df                        : the input DataFrame;
+        - descriptor                : the descriptor used for the initialization of the OHE;
+        - encode_parameters_manager : contains the relevant parameters to the encoding operation.
+
+    Returns:
+        A one-hot encoded DataFrame, the One Hot Encoder.
+    """
+    ohe = OneHotEncoder(
+        descriptor,
+        separator=encode_parameters_manager.separator,
+        exceptions=encode_parameters_manager.exceptions,
+        default_categories=encode_parameters_manager.default_categories
+    )
+    return ohe.encode(df), ohe
 
 
 ######################
 #      VISITORS      #
 ######################
+# Visitors allow to enrich functions (here 'embed_data') with optional behaviours.
+
 
 class DefaultEmbedDataVisitor:
     def start(
@@ -55,69 +122,50 @@ class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
         print(string_output)
 
 
-###################
-#      EMBED      #
-###################
+############################
+#    PARAMETERS MANAGER    #
+############################
 
 
-def select_targets(df, accessor_code, descriptor):
+class EncodeParametersManager:
     """
-    Remove any row with any unknown target. Unused targets are removed.
-
-    Args:
-        - df            : the input DataFrame;
-        - accessor_code : a code that points to an accessor of df;
-        - descriptor    : a Descriptor.
-
-    Returns:
-        A DataFrame with all targets but the one mentionned dropped ;
-        any row that contains missing value regarding the selected target is dropped as well.
+    Allows to store and manage parameters for the 'embed_data' function.
+    It is more or less a dictionary.
     """
-    target_to_focus   = getattr(df, accessor_code).target
-    targets_to_ignore = difference(
-        [column for column in df.columns if descriptor.get_entry(column).tags == "target"],
-        target_to_focus
-    )
+    def __init__(
+            self,
+            separator=None,
+            exceptions=None,
+            default_categories=None,
+    ):
+        self.m_separator          = separator
+        self.m_exceptions         = exceptions
+        self.m_default_categories = default_categories
 
-    return df.drop(columns=targets_to_ignore) \
-             .dropna(subset=target_to_focus)
+    @property
+    def separator(self):
+        return self.m_separator
 
-def extract_dense_dataframe(df, threshold):
-    """
-    Remove the columns that are less dense than a given threshold,
-    then, remove the rows that contain missing values.
+    @property
+    def exceptions(self):
+        return self.m_exceptions
 
-    Args:
-        - df        : the input DataFrame;
-        - threshold : the density threshold.
+    @property
+    def default_categories(self):
+        return self.m_default_categories
 
-    Returns:
-        A dense DataFrame.
-    """
-    sparse_columns = get_sparse_columns(df, threshold)
-    return df.drop(columns=sparse_columns) \
-             .dropna()
+    def add_exceptions(self, exceptions):
+        # Allows to handle single exceptions without bothering wrapping them into a list
+        if type(exceptions) == str or not hasattr(exceptions, '__iter__'):
+            exceptions = [exceptions]
+
+        self.m_exceptions = union(self.m_exceptions, exceptions)
 
 
-def encode_categorical_data(df, descriptor, encode_parameters_manager):
-    """
-    Build a One Hot Encoder and encode categorical data with it.
+#################
+#     EMBED     #
+#################
 
-    Args:
-        - df                        : the input DataFrame;
-        - descriptor                : the descriptor used for the initialization of the OHE;
-        - encode_parameters_manager : contains the relevant parameters to the encoding operation.
-
-    Returns:
-        A one-hot encoded DataFrame, the One Hot Encoder.
-    """
-    ohe = OneHotEncoder(
-        descriptor,
-        separator=encode_parameters_manager.separator,
-        exceptions=encode_parameters_manager.exceptions,
-        default_categories=encode_parameters_manager.default_categories
-    )
-    return ohe.encode(df), ohe
 
 def embed_data(
         df,

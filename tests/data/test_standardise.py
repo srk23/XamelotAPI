@@ -3,7 +3,7 @@ import pandas as pd
 
 from project.data.standardise import *
 from project.data.describe    import Entry, Descriptor
-from project.data.accessor    import build_survival_accessor
+from project.data.dataframes    import build_survival_accessor
 
 _ = build_survival_accessor(event="c", duration="t", accessor_code="test_surv")
 

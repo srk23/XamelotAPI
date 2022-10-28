@@ -3,6 +3,7 @@
 import json
 import os
 
+
 class Configurator:
     def __init__(self,
                  data_dir      = None,

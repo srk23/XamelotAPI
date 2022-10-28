@@ -1,4 +1,4 @@
-# You will find here a bunch of useful and various geometrical tools.
+# A bunch of geometrical tools.
 
 import numpy as np
 import sympy as sp

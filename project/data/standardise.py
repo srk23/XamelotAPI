@@ -1,4 +1,5 @@
-# Functions to standardise numerical data
+# Functions to standardise (or normalise) numerical data.
+
 import re
 
 def get_standardisation(df):
@@ -47,6 +48,9 @@ class Standardiser:
         return output_df
 
     def undo(self, df):
+        """
+        From a standardised DataFrame, returns its unstandardised version.
+        """
         def _undo_(s):
             return (s * self.m_scales[s.name]) + self.m_centers[s.name]
 
