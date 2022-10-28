@@ -1,4 +1,4 @@
-from project.misc.lists import *
+from xmlot.misc.lists import *
 
 a, b, c, d, e = 'a', 'b', 'c', 'd', 'e'
 

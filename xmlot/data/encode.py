@@ -3,7 +3,7 @@
 import pandas as pd
 import re
 
-from project.data.describe      import Descriptor
+from xmlot.data.describe      import Descriptor
 
 class OneHotEncoder:
     def __init__(self, descriptor: Descriptor, separator="#", exceptions=(), default_categories=None):

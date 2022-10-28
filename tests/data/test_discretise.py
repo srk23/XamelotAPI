@@ -1,7 +1,7 @@
 import pandas as pd
 
-from project.data.discretise import *
-from project.data.dataframes   import build_survival_accessor
+from xmlot.data.discretise import *
+from xmlot.data.dataframes   import build_survival_accessor
 
 ACCESSOR_CODE = "code"
 build_survival_accessor(

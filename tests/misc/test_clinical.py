@@ -1,5 +1,5 @@
 import numpy                 as     np
-from   project.misc.clinical import compute_bmi, compute_egfr
+from   xmlot.misc.clinical import compute_bmi, compute_egfr
 
 def test_compute_bmi():
     height = 200

@@ -1,5 +1,5 @@
-from project.data.split         import *
-from project.misc.misc import set_seed
+from xmlot.data.split         import *
+from xmlot.misc.misc import set_seed
 
 S1 = pd.DataFrame({
     'x1': [1, 2, 1],

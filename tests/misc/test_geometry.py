@@ -1,6 +1,6 @@
 import numpy as np
 
-from project.misc.geometry import get_distance_regarding_intersection
+from xmlot.misc.geometry import get_distance_regarding_intersection
 
 def test_get_distance_regarding_intersection():
     r   = 1

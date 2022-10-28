@@ -1,5 +1,5 @@
-from project.data.build         import *
-from project.misc.misc import identity
+from xmlot.data.build         import *
+from xmlot.misc.misc import identity
 
 
 DF4 = pd.DataFrame(

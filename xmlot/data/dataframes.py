@@ -6,8 +6,8 @@ import pandas as pd
 from warnings   import catch_warnings, simplefilter
 from contextlib import nullcontext
 
-from project.misc.misc           import get_var_name
-from project.misc.lists import difference, intersection
+from xmlot.misc.misc           import get_var_name
+from xmlot.misc.lists import difference, intersection
 
 
 #####################

@@ -1,7 +1,7 @@
 import pandas as pd
 
-from project.data.describe import Entry, Descriptor
-from project.data.encode   import OneHotEncoder
+from xmlot.data.describe import Entry, Descriptor
+from xmlot.data.encode   import OneHotEncoder
 
 
 DESCRIPTOR = Descriptor(

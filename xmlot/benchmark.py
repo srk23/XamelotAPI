@@ -1,5 +1,5 @@
 # Benchmarking tools to compare various models on a fair ground.
-# Models can come from various sources as long as they follow the same design (cf. Model in project.models.model)
+# Models can come from various sources as long as they follow the same design (cf. Model in xmlot.models.model)
 
 import time
 
@@ -7,9 +7,9 @@ from   copy   import deepcopy
 import numpy  as     np
 import pandas as     pd
 
-from project.data.discretise  import DefaultDiscretiser
-from project.data.split       import split_dataset
-from project.misc.misc        import set_seed
+from xmlot.data.discretise  import DefaultDiscretiser
+from xmlot.data.split       import split_dataset
+from xmlot.misc.misc        import set_seed
 
 
 ######################

@@ -5,8 +5,8 @@ import matplotlib.patches         as     phs
 from   matplotlib.ticker          import MaxNLocator
 import pandas                     as     pd
 
-from   project.data.dataframes    import density, get_sparse_columns
-from   project.misc.geometry      import get_distance_regarding_intersection, get_radius
+from   xmlot.data.dataframes    import density, get_sparse_columns
+from   xmlot.misc.geometry      import get_distance_regarding_intersection, get_radius
 
 
 #####################
@@ -293,7 +293,7 @@ def plot_thresholds(df, steps, row_yticks=(0, 40000, 5000), col_yticks=(0, 90, 1
     nrows = []
 
     for threshold in thresholds:
-        # Note: it is basically 'extract_dense_dataframe' from 'project.data.embed'.
+        # Note: it is basically 'extract_dense_dataframe' from 'xmlot.data.embed'.
         # However, using it triggers some circular import.
         df_ = df.copy().drop(columns=get_sparse_columns(df, threshold)).dropna()
         nrows.append(df_.shape[0])

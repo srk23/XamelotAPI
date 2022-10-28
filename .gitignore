@@ -9,4 +9,4 @@ dist
 .minifoldrc
 .pytest_cache
 .idea
-project.egg-info/
+xmlot.egg-info/

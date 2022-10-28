@@ -4,7 +4,7 @@ from lifelines.utils  import concordance_index
 from pycox.evaluation import EvalSurv
 from sksurv.datasets  import get_x_y
 
-from project.models.survival.shelf import LifelinesCoxModel,    \
+from xmlot.models.survival.shelf import LifelinesCoxModel,    \
                                           ScikitCoxModel,       \
                                           DeepSurv,             \
                                           DeepHit,              \

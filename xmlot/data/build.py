@@ -3,7 +3,7 @@
 import numpy  as np
 import pandas as pd
 
-from project.misc.clinical import compute_egfr
+from xmlot.misc.clinical import compute_egfr
 
 
 def build_egfr(input_df, creatinine_column):

@@ -78,11 +78,11 @@ def json_config(json_filename):
         Build a Configurator from a .json file.
         The corresponding .json file should have a structure similar to that example:
         ```{
-            "MAIN_DIR"  : "/home/user/documents/projects/project/",
-            "DUMP_DIR"  : "/home/user/documents/projects/project/data/dump/",
-            "DESC_DIR"  : "/home/user/documents/projects/project/data/description/",
-            "PARAMS_DIR": "/home/user/documents/projects/project/data/",
-            "DATA_DIR"  : "/mnt/netshare/projects/project/data/",
+            "MAIN_DIR"  : "/home/user/documents/projects/xmlot/",
+            "DUMP_DIR"  : "/home/user/documents/projects/xmlot/data/dump/",
+            "DESC_DIR"  : "/home/user/documents/projects/xmlot/data/description/",
+            "PARAMS_DIR": "/home/user/documents/projects/xmlot/data/",
+            "DATA_DIR"  : "/mnt/netshare/projects/xmlot/data/",
             "DATA_FILES": {
                 "offering": [
                     "offering_file_1.xlsx",

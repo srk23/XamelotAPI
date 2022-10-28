@@ -4,7 +4,7 @@ from sklearn.naive_bayes    import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble       import RandomForestClassifier, AdaBoostClassifier
 
-from project.models.model import FromTheShelfModel
+from xmlot.models.model import FromTheShelfModel
 
 
 ##############################

@@ -1,8 +1,8 @@
 # Transform the data into a ML-ready shape.
 
-from project.data.encode         import OneHotEncoder
-from project.data.dataframes     import get_sparse_columns
-from project.misc.lists import difference, union
+from xmlot.data.encode         import OneHotEncoder
+from xmlot.data.dataframes     import get_sparse_columns
+from xmlot.misc.lists import difference, union
 
 
 ############################

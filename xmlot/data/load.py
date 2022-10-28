@@ -8,11 +8,11 @@ import pandas as pd
 
 from copy import deepcopy
 
-from project.config        import Configurator
-from project.data.describe import Entry, Descriptor
-from project.data.clean    import CleanParametersManager
-from project.data.embed    import EncodeParametersManager
-from project.misc.misc     import identity, string_autotype
+from xmlot.config        import Configurator
+from xmlot.data.describe import Entry, Descriptor
+from xmlot.data.clean    import CleanParametersManager
+from xmlot.data.embed    import EncodeParametersManager
+from xmlot.misc.misc     import identity, string_autotype
 
 
 def save_data(dataframes, config: Configurator, dump_name):
@@ -22,7 +22,7 @@ def save_data(dataframes, config: Configurator, dump_name):
 
     Args:
         - dataframes: dataframes to save;
-        - config    : Configurator managing project's paths;
+        - config    : Configurator managing xmlot's paths;
         - dump_name : filename of the serialized DataFrame (no extension).
     
     Returns: None.
@@ -40,7 +40,7 @@ def load_xlsx_data(config: Configurator, dump_name=""):
     The place where serialized DataFrames are stored is specified by a Configurator.
     
     Args:
-        - config    : Configurator managing project's paths;
+        - config    : Configurator managing xmlot's paths;
         - dump_name : filename of the serialized DataFrames (no extension).
     
     Returns: similarly to files, return dictionary filled with the corresponding
@@ -70,7 +70,7 @@ def load_data(config: Configurator, dump_name):
     Technically can load any serialized item in the corresponding "dump" directory.
     
     Args:
-        - config    : Configurator managing project's paths;
+        - config    : Configurator managing xmlot's paths;
         - dump_name : filename of the serialized DataFrames (no extension).
     
     Returns: a dictionary filled with DataFrames or a DataFrame.
@@ -86,7 +86,7 @@ def load_descriptor(config: Configurator, csv_name):
     Load descriptor from a .csv file.
 
     Args:
-        - config   : Configurator managing project's paths;
+        - config   : Configurator managing xmlot's paths;
         - csv_name : filename of .csv file.
 
     Returns: a Descriptor.
@@ -129,7 +129,7 @@ def save_descriptor(descriptor, config: Configurator, csv_name):
 
     Args:
         - descriptor: descriptor to save;
-        - config    : Configurator managing project's paths;
+        - config    : Configurator managing xmlot's paths;
         - csv_name  : filename of the serialized DataFrame (no extension).
 
     Returns: None.
@@ -165,7 +165,7 @@ def load_clean_parameters_manager(config: Configurator, json_name):
     Load parameters related to the cleaning step from a .json file.
 
     Args:
-        - config    : Configurator managing project's paths;
+        - config    : Configurator managing xmlot's paths;
         - json_name : name of the .json file (no extension).
 
     Returns:
@@ -212,7 +212,7 @@ def load_encode_parameters_manager(config: Configurator, json_name):
     Load parameters related to the encoding step from a .json file.
 
     Args:
-        - config    : Configurator managing project's paths;
+        - config    : Configurator managing xmlot's paths;
         - json_name : name of the .json file (no extension).
 
     Returns:

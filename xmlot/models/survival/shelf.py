@@ -3,7 +3,7 @@
 
 import pandas as pd
 
-from project.models.model import FromTheShelfModel
+from xmlot.models.model import FromTheShelfModel
 
 # Shelf:
 import lifelines

@@ -1,4 +1,4 @@
-from project.data.dataframes import *
+from xmlot.data.dataframes import *
 
 DF1 = pd.DataFrame({"a": [0, 0], "b": [pd.NA, 0], "c": [pd.NA, pd.NA]})
 DF2 = pd.DataFrame({"a": [], "b": [], "c": []})

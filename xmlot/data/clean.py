@@ -3,18 +3,18 @@
 import numpy  as np
 import pandas as pd
 
-from project.data.build      import build_egfr,       \
+from xmlot.data.build      import build_egfr,       \
                                     build_max,        \
                                     build_min,        \
                                     build_easy_trend, \
                                     build_binary_code,\
                                     build_mcens,      \
                                     build_msurv
-from project.data.dataframes import build_empty_mask, \
+from xmlot.data.dataframes import build_empty_mask, \
                                     intersect_columns,\
                                     get_constant_columns
 
-from project.misc.clinical   import compute_bmi
+from xmlot.misc.clinical   import compute_bmi
 
 
 #############################
