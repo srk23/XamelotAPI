@@ -1,5 +1,6 @@
 # Allow to one hot encode categorical data.
 
+import numpy  as np
 import pandas as pd
 import re
 
@@ -26,6 +27,10 @@ class OneHotEncoder:
     def exceptions(self):
         return self.m_exceptions
 
+    @property
+    def default_categories(self):
+        return self.m_default_categories
+
     def is_encoded(self, column):
         return self.separator in column
 
@@ -33,7 +38,7 @@ class OneHotEncoder:
         return re.split(self.separator, column)
 
     def encode(self, df):
-        encoded_df = df.copy()
+        encoded_df = df.copy().replace(pd.NA, np.nan)
         self.m_dtypes = encoded_df.dtypes
 
         idx_cols = list()
@@ -49,16 +54,16 @@ class OneHotEncoder:
                     # In other words, the corresponding matrix would not be invertible in that case.
                     # Indeed, the first column can be seen as a linear combination of the other ones.
                     # Therefore, we need to prevent its construction.
-                    if column not in self.m_default_categories.keys():
+                    if column not in self.default_categories.keys():
                         default_category_not_defined_yet = True
                     else:
                         default_category_not_defined_yet = False
 
                     for category in encoded_df[column].value_counts().index:
                         if default_category_not_defined_yet:
-                            self.m_default_categories[column] = str(category)
+                            self.default_categories[column] = str(category)
                             default_category_not_defined_yet  = False
-                        elif str(category) != self.m_default_categories[column]:
+                        elif str(category) != self.default_categories[column]:
                             new_column = column + self.separator + str(category)
                             # To prevent performance issues, we do not add encoded columns
                             # into encoded_df one by one;
@@ -66,7 +71,8 @@ class OneHotEncoder:
                             # all at once at the end of this function.
                             new_df = pd.DataFrame([], columns=[], index=encoded_df.index)
                             new_df[new_column] = 0
-                            new_df[new_column].mask(encoded_df[column] == category, other=1, inplace=True)
+                            new_df[new_column].mask(encoded_df[column] == category, other=1     , inplace=True)
+                            new_df[new_column].mask(encoded_df[column].isna()    , other=np.nan, inplace=True)
                             new_dfs.append(new_df)
                             idx_cols.append(new_column)
                     # Drop the old categorical column once processed
@@ -84,7 +90,7 @@ class OneHotEncoder:
                         try:
                             return categorical_keys[s[column]]
                         except KeyError:
-                            return pd.NA
+                            return np.nan
                             # v = max(categorical_keys.values()) + 1
                             # k = s[column]
                             # categorical_keys[k] = v
@@ -111,7 +117,7 @@ class OneHotEncoder:
 
                 # If it is the first time the column is observed, we place the default value everywhere.
                 if old_column not in decoded_df.columns:
-                    decoded_df[old_column] = self.m_default_categories[old_column]
+                    decoded_df[old_column] = self.default_categories[old_column]
                     idx_cols.append(old_column)
 
                 decoded_df[old_column].mask(decoded_df[column] == 1, other=category, inplace=True)
@@ -131,7 +137,7 @@ class OneHotEncoder:
                         try:
                             return categorical_values[s[column]]
                         except KeyError:
-                            return pd.NA
+                            return np.nan
 
                     decoded_df[column] = decoded_df[[column]].apply(_restore_categories_, axis=1)
                 idx_cols.append(column)
