@@ -1,8 +1,8 @@
-# Transform the data into a ML-ready shape.
+# Transform the data into an ML-ready shape.
 
 from xmlot.data.encode         import OneHotEncoder
 from xmlot.data.dataframes     import get_sparse_columns
-from xmlot.misc.lists import difference, union
+from xmlot.misc.lists import difference
 
 
 ############################
@@ -49,7 +49,13 @@ def extract_dense_dataframe(df, threshold):
              .dropna()
 
 
-def encode_categorical_data(df, descriptor, encode_parameters_manager):
+def encode_categorical_data(
+        df,
+        descriptor,
+        separator,
+        exceptions,
+        default_categories
+):
     """
     Build a One Hot Encoder and encode categorical data with it.
 
@@ -63,9 +69,9 @@ def encode_categorical_data(df, descriptor, encode_parameters_manager):
     """
     ohe = OneHotEncoder(
         descriptor,
-        separator=encode_parameters_manager.separator,
-        exceptions=encode_parameters_manager.exceptions,
-        default_categories=encode_parameters_manager.default_categories
+        separator,
+        exceptions,
+        default_categories
     )
     return ohe.encode(df), ohe
 
@@ -82,7 +88,9 @@ class DefaultEmbedDataVisitor:
         df,
         threshold,
         descriptor,
-        encode_parameters_manager,
+        separator,
+        exceptions,
+        default_categories,
         accessor_code
     ): pass
 
@@ -90,7 +98,15 @@ class DefaultEmbedDataVisitor:
 
     def extract_dense_dataframe(self, df, threshold): pass
 
-    def encode_categorical_data(self, df, descriptor, encode_parameters_manager): pass
+    def encode_categorical_data(
+        self,
+        df,
+        descriptor,
+        separator,
+        exceptions,
+        default_categories
+    ):
+        pass
 
 class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
     def start(
@@ -98,7 +114,9 @@ class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
         df,
         threshold,
         descriptor,
-        encode_parameters_manager,
+        separator,
+        exceptions,
+        default_categories,
         accessor_code
     ):
         string_output  = "Starting embedding...\n"
@@ -115,51 +133,18 @@ class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
 
         print(string_output)
 
-    def encode_categorical_data(self, df, descriptor, encode_parameters_manager):
+    def encode_categorical_data(
+        self,
+        df,
+        descriptor,
+        separator,
+        exceptions,
+        default_categories
+    ):
         string_output  = "\nFinalizing embedding...\n"
         string_output += "\tAt this point, the dataset has {0} rows and {1} columns.".format(*df.shape)
 
         print(string_output)
-
-
-############################
-#    PARAMETERS MANAGER    #
-############################
-
-
-class EncodeParametersManager:
-    """
-    Allows to store and manage parameters for the 'embed_data' function.
-    It is more or less a dictionary.
-    """
-    def __init__(
-            self,
-            separator=None,
-            exceptions=None,
-            default_categories=None,
-    ):
-        self.m_separator          = separator
-        self.m_exceptions         = exceptions
-        self.m_default_categories = default_categories
-
-    @property
-    def separator(self):
-        return self.m_separator
-
-    @property
-    def exceptions(self):
-        return self.m_exceptions
-
-    @property
-    def default_categories(self):
-        return self.m_default_categories
-
-    def add_exceptions(self, exceptions):
-        # Allows to handle single exceptions without bothering wrapping them into a list
-        if type(exceptions) == str or not hasattr(exceptions, '__iter__'):
-            exceptions = [exceptions]
-
-        self.m_exceptions = union(self.m_exceptions, exceptions)
 
 
 #################
@@ -171,7 +156,9 @@ def embed_data(
         df,
         threshold,
         descriptor,
-        encode_parameters_manager,
+        separator,
+        exceptions,
+        default_categories,
         accessor_code,
         visitor=DefaultEmbedDataVisitor()
 ):
@@ -200,7 +187,9 @@ def embed_data(
         df,
         threshold,
         descriptor,
-        encode_parameters_manager,
+        separator,
+        exceptions,
+        default_categories,
         accessor_code
     )
 
@@ -210,7 +199,7 @@ def embed_data(
     df = extract_dense_dataframe(df, threshold)
     visitor.extract_dense_dataframe(df, threshold)
 
-    df, ohe = encode_categorical_data(df, descriptor, encode_parameters_manager)
-    visitor.encode_categorical_data(df, descriptor, encode_parameters_manager)
+    df, ohe = encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
+    visitor.encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
 
     return df, ohe

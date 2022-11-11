@@ -10,8 +10,6 @@ from copy import deepcopy
 
 from xmlot.config        import Configurator
 from xmlot.data.describe import Entry, Descriptor
-from xmlot.data.clean    import CleanParametersManager
-from xmlot.data.embed    import EncodeParametersManager
 from xmlot.misc.misc     import identity, string_autotype
 
 
@@ -160,7 +158,7 @@ def save_descriptor(descriptor, config: Configurator, csv_name):
     f.write(csv_content)
     f.close()
 
-def load_clean_parameters_manager(config: Configurator, json_name):
+def load_cleaning_parameters(config: Configurator, json_name):
     """
     Load parameters related to the cleaning step from a .json file.
 
@@ -176,38 +174,38 @@ def load_clean_parameters_manager(config: Configurator, json_name):
         parameters = json.load(parameters_json)
 
     # Build CleanParametersManager
-    cpm = CleanParametersManager(
-        heterogeneous_columns = parameters["HETEROGENEOUS_COLUMNS"],
-        generic_unknowns      = parameters["GENERIC_UNKNOWNS"],
-        specific_unknowns     = parameters["SPECIFIC_UNKNOWNS"],
-        limits                = parameters["LIMITS"],
-        bmi_limits            = parameters["BMI_LIMITS"],
-        references            = parameters["REFERENCES"],
-        categorical_keys      = parameters["CATEGORICAL_KEYS"],
-        replacement_pairs     = parameters["REPLACEMENT_PAIRS"],
-        columns_to_categorise = parameters["COLUMNS_TO_CATEGORISE"],
-        irrelevant_categories = parameters["IRRELEVANT_CATEGORIES"],
-        irrelevant_columns    = parameters["IRRELEVANT_COLUMNS"],
-        columns_with_unknowns = parameters["COLUMNS_WITH_UNKNOWNS"],
-        unknown               = parameters["UNKNOWN"]
-    )
+    cleaning_parameters = {
+        "heterogeneous_columns" : parameters["HETEROGENEOUS_COLUMNS"],
+        "generic_unknowns"      : parameters["GENERIC_UNKNOWNS"],
+        "specific_unknowns"     : parameters["SPECIFIC_UNKNOWNS"],
+        "limits"                : parameters["LIMITS"],
+        "bmi_limits"            : parameters["BMI_LIMITS"],
+        "references"            : parameters["REFERENCES"],
+        "categorical_keys"      : parameters["CATEGORICAL_KEYS"],
+        "replacement_pairs"     : parameters["REPLACEMENT_PAIRS"],
+        "columns_to_categorise" : parameters["COLUMNS_TO_CATEGORISE"],
+        "irrelevant_categories" : parameters["IRRELEVANT_CATEGORIES"],
+        "irrelevant_columns"    : parameters["IRRELEVANT_COLUMNS"],
+        "columns_with_unknowns" : parameters["COLUMNS_WITH_UNKNOWNS"],
+        "unknown"               : parameters["UNKNOWN"]
+    }
 
     # Since JSON does not handle int as keys, we need to do it "by hand".
-    typed_references = deepcopy(cpm.references)
-    for i, ref_group in enumerate(cpm.references):
+    typed_references = deepcopy(cleaning_parameters["references"])
+    for i, ref_group in enumerate(cleaning_parameters["references"]):
         _, reference = ref_group
 
-        for key in cpm.references[i][1].keys():
-            if  re.fullmatch("[0-9]+", key) and cpm.references[i][0][0] != 'mgrade':
+        for key in cleaning_parameters["references"][i][1].keys():
+            if  re.fullmatch("[0-9]+", key) and cleaning_parameters["references"][i][0][0] != 'mgrade':
                 adjust_type = int
             else:
                 adjust_type = identity
             typed_references[i][1][adjust_type(key)] = typed_references[i][1].pop(key)
-    cpm.references = typed_references
+    cleaning_parameters["references"] = typed_references
 
-    return cpm
+    return cleaning_parameters
 
-def load_encode_parameters_manager(config: Configurator, json_name):
+def load_encoding_parameters(config: Configurator, json_name):
     """
     Load parameters related to the encoding step from a .json file.
 
@@ -221,8 +219,8 @@ def load_encode_parameters_manager(config: Configurator, json_name):
     with open(config.parameters_dir + json_name + ".json") as parameters_json:
         parameters = json.load(parameters_json)
 
-    return EncodeParametersManager(
-        separator          = parameters["SEPARATOR"],
-        exceptions         = parameters["EXCEPTIONS"],
-        default_categories = parameters["DEFAULT_CATEGORIES"],
-    )
+    return {
+        "separator"          : parameters["SEPARATOR"],
+        "exceptions"         : parameters["EXCEPTIONS"],
+        "default_categories" : parameters["DEFAULT_CATEGORIES"],
+    }

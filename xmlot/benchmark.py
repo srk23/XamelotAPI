@@ -184,7 +184,7 @@ def benchmark(
         k                = 5,
         test_frac        = .2,
         seed             = None,
-        visitor          = DefaultBenchmarkVisitor
+        visitor          = DefaultBenchmarkVisitor()
 ):
     """
     Args:

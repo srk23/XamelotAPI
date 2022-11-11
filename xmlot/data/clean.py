@@ -53,31 +53,27 @@ def get_biolevel_columns(biolevel, df, temporal_columns_only=False):
 ############################
 
 
-def set_columns_to_lower_case(df, cpm=None):
+def set_columns_to_lower_case(df, **_):
     """
     Set column names to lower case.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df : a DataFrame.
 
     Returns: the updated DataFrame.
     """
-    _ = cpm
     return df.rename(str.lower, axis='columns')
 
 
-def change_int64(df, cpm=None):
+def change_int64(df, **_):
     """
     Change type to handle non-float NaN.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df : a DataFrame.
 
     Returns: the updated DataFrame.
     """
-    _ = cpm
     dtype = {
             column: 'Int64'
             for column in df.columns
@@ -86,51 +82,52 @@ def change_int64(df, cpm=None):
     return df.astype(dtype)
 
 
-def ensure_type_uniformity(df, cpm):
+def ensure_type_uniformity(df, heterogeneous_columns, **_):
     """
     Ensure type uniformity.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                    : a DataFrame;
+        - heterogeneous_columns : a list of columns that contains values of various types.
 
     Returns: the updated DataFrame.
     """
-    columns_to_retype = intersect_columns(cpm.heterogeneous_columns, df)
+    columns_to_retype = intersect_columns(heterogeneous_columns, df)
     df[columns_to_retype] = df[columns_to_retype].applymap(str)
     return df
 
 
-def correct_unknown_values(df, cpm):
+def correct_unknown_values(df, generic_unknowns, specific_unknowns, **_):
     """
     Change 'unknown values' to NaN.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                : a DataFrame;
+        - generic_unknowns  : a list of values that refer to an unknown value across the whole dataset;
+        - specific_unknowns : a dictionary that specifies the list of values referring to an unkown value per column.
 
     Returns: the updated DataFrame.
     """
     mask  = build_empty_mask(df)
-    mask |= (df.isin(cpm.generic_unknowns))
-    for column, nan_values in cpm.specific_unknowns.items():
+    mask |= (df.isin(generic_unknowns))
+    for column, nan_values in specific_unknowns.items():
         if column in df.columns:
             mask[column] |= df[column].isin(nan_values)
     return df.mask(mask)
 
 
-def remove_abnormal_values(df, cpm):
+def remove_abnormal_values(df, limits, **_):
     """
     Remove abnormal values (see 'limits' dict).
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df     : a DataFrame;
+        - limits : a dictionary that provides for the appropriate columns a pair of minimum and maximum values.
 
     Returns: the updated DataFrame.
     """
     mask = build_empty_mask(df)
-    for columns, minmax_values in cpm.limits:
+    for columns, minmax_values in limits:
         min_value, max_value = minmax_values
         columns_to_crop = intersect_columns(columns, df)
         mask[columns_to_crop] |= df[columns_to_crop] <= min_value
@@ -138,17 +135,17 @@ def remove_abnormal_values(df, cpm):
     return df.mask(mask)
 
 
-def use_category_names(df, cpm):
+def use_category_names(df, references, **_):
     """
     Use category names instead of codes.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df         : a DataFrame;
+        - references : a dictionary that provides a textual correspondence of some 'encoded' categories.
 
     Returns: the updated DataFrame.
     """
-    for columns, reference in cpm.references:
+    for columns, reference in references:
         def _remap_(value):
             if value in reference.keys():
                 return reference[value]
@@ -160,17 +157,17 @@ def use_category_names(df, cpm):
     return df
 
 
-def impute_bmi(df, cpm):
+def impute_bmi(df, bmi_limits, **_):
     """
     Impute BMI.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df         : a DataFrame;
+        - bmi_limits : provides a pair of minimum and maximum values regarding BMI.
 
     Returns: the updated DataFrame.
     """
-    min_threshold, max_threshold = cpm.bmi_limits
+    min_threshold, max_threshold = bmi_limits
 
     for prefix in ('r', 'd'):
         bmi    = prefix + "bmi"
@@ -190,13 +187,13 @@ def impute_bmi(df, cpm):
     return df
 
 
-def transform_dialysis_columns(df, cpm):
+def transform_dialysis_columns(df, descriptor, **_):
     """
     Transform dialysis related columns.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df         : a DataFrame;
+        - descriptor : a Descriptor.
 
     Returns: the updated DataFrame.
     """
@@ -204,7 +201,7 @@ def transform_dialysis_columns(df, cpm):
         "days_on_dial_tx": lambda x: 0 if x > 0 else 1,
         "dial_at_reg"    : lambda x: 1 if x == "Not on dialysis" else 0,
         "dial_at_tx_type": lambda x: 1 if x == "Not on dialysis" else 0,
-        "dial_at_tx"     : lambda x: cpm.descriptor.get_entry("dial_at_tx").categorical_keys[x]
+        "dial_at_tx"     : lambda x: descriptor.get_entry("dial_at_tx").categorical_keys[x]
     }
     df["dial_code"] = build_binary_code(
         df,
@@ -224,17 +221,15 @@ def transform_dialysis_columns(df, cpm):
     return df.drop(columns=['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'])
 
 
-def recompute_egfr(df, cpm=None):
+def recompute_egfr(df, **_):
     """
     Recompute eGFR.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df : a DataFrame.
 
     Returns: the updated DataFrame.
     """
-    _ = cpm
     creatinines = get_biolevel_columns('creatinine', df)
     egfrs       = get_biolevel_columns('degfr'     , df)
     creat_egfr  = zip(creatinines, egfrs)
@@ -245,21 +240,18 @@ def recompute_egfr(df, cpm=None):
     return df
 
 
-def impute_biolevels(df, cpm=None):
+def impute_biolevels(df, **_):
     """
     Get trends, minimum, and maximum for biolevels.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df : a DataFrame.
 
     Returns: the updated DataFrame.
     """
     def _columns_(key_, df_, temporal_columns_only=False):
         columns_ = get_biolevel_columns(key_, df_, temporal_columns_only=temporal_columns_only)
         return intersect_columns(columns_, df_)
-
-    _ = cpm
 
     columns_to_drop = list()
     for key in ('alt', 'ast', 'amylase', 'creatinine', 'degfr'):
@@ -276,34 +268,34 @@ def impute_biolevels(df, cpm=None):
     return df.drop(columns=columns_to_drop)
 
 
-def replace(df, cpm):
+def replace(df, replacement_pairs, **_):
     """
     Replace older columns by new ones.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                : a DataFrame;
+        - replacement_pairs : a dictionary to rename columns.
 
     Returns: the updated DataFrame.
     """
-    for old_col, new_col in cpm.replacement_pairs:
+    for old_col, new_col in replacement_pairs:
         df = df.drop(columns=old_col) \
             .rename(columns={new_col: old_col})
     return df
 
 
-def categorise(df, cpm):
+def categorise(df, columns_to_categorise, **_):
     """
-    Turn nnumerical columns into categorical ones.
+    Turn numerical columns into categorical ones.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                    : a DataFrame;
+        - columns_to_categorise : a list of numerical columns to be turned into categorical ones.
 
     Returns: the updated DataFrame.
     """
     columns_to_drop = list()
-    for key, cuts in cpm.columns_to_categorise.items():
+    for key, cuts in columns_to_categorise.items():
         col = "cat_" + key
         df[col] = "before {0}".format(cuts[0])
 
@@ -318,13 +310,12 @@ def categorise(df, cpm):
     return df.drop(columns=columns_to_drop)
 
 
-def impute_multirisk(df, cpm=None):
+def impute_multirisk(df, **_):
     """
     Build the competing risk columns from patient and graft survival data.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                  : a DataFrame.
 
     Returns: the updated DataFrame.
     """
@@ -335,63 +326,63 @@ def impute_multirisk(df, cpm=None):
             return False
         return True
 
-    _ = cpm
-
     df[['rdeath_bool', 'gcens_bool']] = df[['rdeath', 'gcens']].applymap(_booleanise_)
     df['mcens'] = df.apply(lambda s: build_mcens(s, pcens="rdeath_bool", gcens="gcens_bool"), axis=1)
     df['msurv'] = df.apply(build_msurv, axis=1)
     return df.drop(columns=['rdeath_bool', 'gcens_bool'])
 
 
-def add_unknown_category(df, cpm):
+def add_unknown_category(df, columns_with_unknowns, unknown, **_):
     """
     For selected columns, create an 'Unknown' category instead of introducing missing values.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                    : a DataFrame;
+        - columns_with_unknowns : a list of columns that needs a specific treatment of their unknown values;
+        - unknown               : the default, not np.nan/pd.NA, unknown value.
 
     Returns: the updated DataFrame.
     """
-    df[cpm.columns_with_unknowns] = df[cpm.columns_with_unknowns].mask(
-        df[cpm.columns_with_unknowns].isna(),
-        cpm.unknown
+    df[columns_with_unknowns] = df[columns_with_unknowns].mask(
+        df[columns_with_unknowns].isna(),
+        unknown
     )
 
     return df
 
 
-def remove_irrelevant_categories(df, cpm):
+def remove_irrelevant_categories(df, irrelevant_categories, **_):
     """
     Drop rows containing categories tagged as irrelevant.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                    : a DataFrame;
+        - irrelevant_categories : a list of categories that correspond to irrelevant rows (to discard).
 
     Returns: the updated DataFrame.
     """
-    columns = intersect_columns(cpm.irrelevant_categories.keys(), df)
+    columns = intersect_columns(irrelevant_categories.keys(), df)
 
     for column in columns:
-        df = df.drop(df[df[column].isin(cpm.irrelevant_categories[column])].index)
+        df = df.drop(df[df[column].isin(irrelevant_categories[column])].index)
 
     return df
 
 
-def remove_irrelevant_columns(df, cpm):
+def remove_irrelevant_columns(df, descriptor, irrelevant_columns, **_):
     """
     Remove columns tagged as irrelevant.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df                 : a DataFrame;
+        - descriptor         : a Descriptor;
+        - irrelevant_columns : a list of columns to discard.
 
     Returns: the updated DataFrame.
     """
     def _is_irrelevant_(column):
-        return cpm.descriptor.get_entry(column).tags not in {"feature", "target"} \
-                or column in cpm.irrelevant_columns
+        return descriptor.get_entry(column).tags not in {"feature", "target"} \
+               or column in irrelevant_columns
 
     columns_to_drop = intersect_columns(
         [column for column in df.columns if _is_irrelevant_(column)],
@@ -400,35 +391,33 @@ def remove_irrelevant_columns(df, cpm):
     return df.drop(columns=columns_to_drop)
 
 
-def remove_constant_columns(df, cpm=None):
+def remove_constant_columns(df, **_):
     """
     Remove constant columns.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df : a DataFrame.
 
     Returns: the updated DataFrame.
     """
-    _ = cpm
     return df.drop(columns=get_constant_columns(df))
 
 
 # Reorder columns
-def reorder_columns(df, cpm):
+def reorder_columns(df, descriptor, **_):
     """
     Re-order columns, with the targets at the end.
 
     Args:
-        - df  : a DataFrame;
-        - cpm : a CleanParametersManager.
+        - df         : a DataFrame;
+        - descriptor : a Descriptor.
 
     Returns: the updated DataFrame.
     """
-    cols1 = [col for col in df.columns if cpm.descriptor.get_entry(col).tags != "target"]
-    cols2 = [col for col in df.columns if cpm.descriptor.get_entry(col).tags == "target"]
+    cols1 = [col for col in df.columns if descriptor.get_entry(col).tags != "target"]
+    cols2 = [col for col in df.columns if descriptor.get_entry(col).tags == "target"]
 
-    return df[cols1 + cols2]
+    return df[sorted(cols1) + sorted(cols2)]
 
 
 # The list of all the steps to perform.
@@ -454,117 +443,6 @@ CLEANING_STEPS = (
 )
 
 
-############################
-#    PARAMETERS MANAGER    #
-############################
-
-
-class CleanParametersManager:
-    """
-    Allows to store and manage parameters for the 'clean_data' function.
-    It is more or less a dictionary.
-    """
-    def __init__(
-            self,
-            descriptor=None,
-            heterogeneous_columns=None,
-            generic_unknowns=None,
-            specific_unknowns=None,
-            limits=None,
-            bmi_limits=None,
-            references=None,
-            categorical_keys=None,
-            replacement_pairs=None,
-            columns_to_categorise=None,
-            irrelevant_categories=None,
-            irrelevant_columns=None,
-            columns_with_unknowns=None,
-            unknown=None
-    ):
-        self.m_descriptor            = descriptor
-        self.m_heterogeneous_columns = heterogeneous_columns
-        self.m_generic_unknowns      = generic_unknowns
-        self.m_specific_unknowns     = specific_unknowns
-        self.m_limits                = limits
-        self.m_bmi_limits            = bmi_limits
-        self.m_references            = references
-        self.m_categorical_keys      = categorical_keys
-        self.m_replacement_pairs     = replacement_pairs
-        self.m_columns_to_categorise = columns_to_categorise
-        self.m_irrelevant_categories = irrelevant_categories
-        self.m_irrelevant_columns    = irrelevant_columns
-        self.m_columns_with_unknowns = columns_with_unknowns
-        self.m_unknown               = unknown
-
-    @property
-    def descriptor(self):
-        return self.m_descriptor
-
-    @descriptor.setter
-    def descriptor(self, descriptor):
-        self.m_descriptor = descriptor
-
-    @property
-    def heterogeneous_columns(self):
-        return self.m_heterogeneous_columns
-
-    @property
-    def generic_unknowns(self):
-        return self.m_generic_unknowns
-
-    @property
-    def specific_unknowns(self):
-        return self.m_specific_unknowns
-
-    @property
-    def limits(self):
-        return self.m_limits
-
-    @property
-    def bmi_limits(self):
-        return self.m_bmi_limits
-
-    @property
-    def references(self):
-        return self.m_references
-
-    @references.setter
-    def references(self, references):
-        self.m_references = references
-
-    @property
-    def categorical_keys(self):
-        return self.m_categorical_keys
-
-    @categorical_keys.setter
-    def categorical_keys(self, categorical_keys):
-        self.m_categorical_keys = categorical_keys
-
-    @property
-    def replacement_pairs(self):
-        return self.m_replacement_pairs
-
-    @property
-    def columns_to_categorise(self):
-        return self.m_columns_to_categorise
-
-    @property
-    def irrelevant_categories(self):
-        return self.m_irrelevant_categories
-
-    @property
-    def irrelevant_columns(self):
-        return self.m_irrelevant_columns
-
-    @property
-    def columns_with_unknowns(self):
-        return self.m_columns_with_unknowns
-
-    @property
-    def unknown(self):
-        return self.m_unknown
-
-
 ###################
 #      CLEAN      #
 ###################
@@ -572,22 +450,22 @@ class CleanParametersManager:
 
 def clean_data(
     df,
-    cleaning_steps              = CLEANING_STEPS,
-    cleaning_parameters_manager = None
+    cleaning_steps      = CLEANING_STEPS,
+    cleaning_parameters = None
 ):
     """
     Perform a list of cleaning steps on a DataFrame.
 
     Args:
-        - df                          : the DataFrame to clean;
-        - cleaning_steps              : the list of steps to perform;
-        - cleaning_parameters_manager : a CleaningParametersManager.
+        - df                  : the DataFrame to clean;
+        - cleaning_steps      : the list of steps to perform;
+        - cleaning_parameters : a dictionary containing the parameters relevant to the whole cleaning phase.
 
     Returns: the cleaned DataFrame.
     """
     clean_df = df.copy()
 
     for cleaning_step in cleaning_steps:
-        clean_df = cleaning_step(clean_df, cleaning_parameters_manager)
+        clean_df = cleaning_step(clean_df, **cleaning_parameters)
 
     return clean_df

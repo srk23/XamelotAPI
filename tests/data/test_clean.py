@@ -1,6 +1,5 @@
 from xmlot.data.clean    import *
 from xmlot.data.describe import Entry, Descriptor
-from xmlot.data.clean    import CleanParametersManager
 from xmlot.misc.clinical import compute_egfr
 
 
@@ -85,8 +84,8 @@ def test_type_uniformity():
         'col2': pd.Series(["1", "2"], dtype="object")
     })
 
-    cpm = CleanParametersManager(heterogeneous_columns={"col2", "col3"})
-    DF_ = ensure_type_uniformity(DF2.copy(), cpm)
+    cleaning_parameters  = {"heterogeneous_columns" : {"col2", "col3"}}
+    DF_ = ensure_type_uniformity(DF2.copy(), **cleaning_parameters)
 
     assert (DF_.dtypes == DF.dtypes).all()
 
@@ -96,11 +95,11 @@ def test_type_unknown_values():
     mask = pd.DataFrame({'col1': [True, True], 'col2': [False, True]})
     df   = df2.mask(mask)
 
-    cpm = CleanParametersManager(
-        generic_unknowns={2},
-        specific_unknowns={'col1': {1}}
-    )
-    df_ = correct_unknown_values(df2, cpm)
+    cleaning_parameters = {
+        "generic_unknowns"  : {2},
+        "specific_unknowns" : {'col1': {1}}
+    }
+    df_ = correct_unknown_values(df2, **cleaning_parameters)
 
     assert df.equals(df_)
 
@@ -110,8 +109,8 @@ def test_abnormal_values():
     mask = pd.DataFrame({'col1': [False, True], 'col2': [False, False]})
     df   = df2.mask(mask)
 
-    cpm = CleanParametersManager(limits=[({'col1'}, (0, 1.5))])
-    df_ = remove_abnormal_values(df2, cpm)
+    cleaning_parameters = {"limits" : [({'col1'}, (0, 1.5))]}
+    df_ = remove_abnormal_values(df2, **cleaning_parameters)
 
     assert (df.equals(df_))
 
@@ -137,8 +136,8 @@ def test_categories():
         'col1': ['A', 'B'],
         'col2': ['D', 2]
     })
-    cpm = CleanParametersManager(references=refs)
-    DF_ = use_category_names(DF2.copy(), cpm)
+    cleaning_parameters = {"references" : refs}
+    DF_ = use_category_names(DF2.copy(), **cleaning_parameters)
     assert (DF_.equals(DF))
 
 
@@ -166,7 +165,7 @@ def test_impute_bmi():
         'rbmi': [1.0, 25, np.nan]
     })
 
-    output_df = impute_bmi(input_df, CleanParametersManager(bmi_limits=(0, 100)))
+    output_df = impute_bmi(input_df, **{"bmi_limits" : (0, 100)})
 
     assert target_df.equals(output_df)
 
@@ -184,7 +183,7 @@ def test_transform_dialysis_columns():
         'dial_days': [np.nan, 0.0, 42.0]
     })
 
-    output_df = transform_dialysis_columns(input_df, CleanParametersManager(descriptor=DESCRIPTOR2))
+    output_df = transform_dialysis_columns(input_df, **{"descriptor" : DESCRIPTOR2})
 
     assert target_df.equals(output_df)
 
@@ -247,17 +246,15 @@ def test_impute_biolevels():
     assert target_df.equals(output_df)
 
 def test_replace():
-    cpm = CleanParametersManager(replacement_pairs=[['LoWEr', 'uppER']])
+    cleaning_parameters = {"replacement_pairs" : [['LoWEr', 'uppER']]}
 
     df_target   = pd.DataFrame({'LoWEr': [1, 2]})
-    df_obtained = replace(DF1, cpm)
+    df_obtained = replace(DF1, **cleaning_parameters)
 
     assert df_obtained.equals(df_target)
 
 def test_categorise():
-    cpm = CleanParametersManager(columns_to_categorise={
-        "rweight": [0, 5]
-    })
+    cleaning_parameters = {"columns_to_categorise" : {"rweight": [0, 5]}}
 
     df_target = pd.DataFrame({
         'rweight': [
@@ -266,7 +263,7 @@ def test_categorise():
             "before 0"
         ]
     })
-    df_obtained = categorise(DF5, cpm)
+    df_obtained = categorise(DF5, **cleaning_parameters)
 
     assert df_obtained["cat_rweight"].equals(df_target["rweight"])
 
@@ -291,7 +288,7 @@ def test_impute_multirisk():
 
 def test_add_unknown_category():
     input_df = pd.DataFrame({"a": ["A", pd.NA], "b": [pd.NA, "B"]})
-    output_df = add_unknown_category(input_df, CleanParametersManager(columns_with_unknowns=['a'], unknown=42))
+    output_df = add_unknown_category(input_df, **{"columns_with_unknowns" : ['a'], "unknown" : 42})
     target_df = pd.DataFrame({"a": ["A", 42], "b": [pd.NA, "B"]})
 
     assert output_df.equals(target_df)
@@ -302,9 +299,10 @@ def test_remove_irrelevant_categories():
         'c': ["A"]
     }
 
-    cpm = CleanParametersManager(irrelevant_categories=irrelevant_categories)
+    cleaning_parameters = {"irrelevant_categories" : irrelevant_categories}
+
     input_df  = pd.DataFrame({"a": ["A", "B"], "b": ["A", "B"]})
-    output_df = remove_irrelevant_categories(input_df, cpm)
+    output_df = remove_irrelevant_categories(input_df, **cleaning_parameters)
     target_df = pd.DataFrame({"a": ["A"], "b": ["A"]})
 
     assert output_df.equals(target_df)
@@ -326,8 +324,8 @@ def test_remove_irrelevant_columns():
         'dheight': [1.0, 100.0, 200.0],
     })
 
-    cpm = CleanParametersManager(descriptor=DESCRIPTOR2, irrelevant_columns=['dbmi'])
-    output_df = remove_irrelevant_columns(input_df, cpm)
+    cleaning_parameters = {"descriptor" : DESCRIPTOR2, "irrelevant_columns" : ['dbmi']}
+    output_df = remove_irrelevant_columns(input_df, **cleaning_parameters)
 
     assert target_df.equals(output_df)
 
