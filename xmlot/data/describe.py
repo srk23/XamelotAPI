@@ -32,7 +32,7 @@ class Entry:
         self.m_type           = column_type
         self.m_is_categorical = is_categorical
         self.m_categorical_keys = categorical_keys
-        if categorical_keys:
+        if categorical_keys is not None:
             self.m_categorical_vals = {v: k for (k, v) in categorical_keys.items()}
         else:
             self.m_categorical_vals = None

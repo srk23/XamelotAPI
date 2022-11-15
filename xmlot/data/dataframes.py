@@ -151,11 +151,12 @@ def build_classification_accessor(target, accessor_code="class", disable_warning
 # The following tools are not used in practice but can be helpful for debug.
 
 class Comparison:
-    def __init__(self, df1, df2, differences, depth=2):
+    def __init__(self, df1, df2, differences, depth=2, labels=("df1", "df2")):
         self.m_df1         = df1
         self.m_df2         = df2
         self.m_differences = differences
         self.m_depth       = depth
+        self.m_labels      = labels
 
     @property
     def depth(self):
@@ -166,8 +167,8 @@ class Comparison:
         self.m_depth = depth
 
     def __str__(self):
-        name_df1 = get_var_name(self.m_df1, depth=self.m_depth)
-        name_df2 = get_var_name(self.m_df2, depth=self.m_depth)
+        name_df1 = self.m_labels[0]
+        name_df2 = self.m_labels[1]
 
         string = "Comparing DataFrames df1={0} and df2={1}:\n".format(name_df1, name_df2)
 
@@ -194,7 +195,7 @@ class Comparison:
         return count
 
 
-def compare_dataframes(input_df1, input_df2, depth=2):
+def compare_dataframes(input_df1, input_df2, depth=2, labels=("df1", "df2")):
     """
     Compare two DataFrames.
     Args:
@@ -218,11 +219,11 @@ def compare_dataframes(input_df1, input_df2, depth=2):
         diff[column] = ["not in df1"]
 
     # Column-wise comparison
-    def _append_message_(col, msg):
+    def _append_message_(col, msg_):
         if col in diff.keys():
-            diff[col].append(msg)
+            diff[col].append(msg_)
         else:
-            diff[col] = [msg]
+            diff[col] = [msg_]
 
     columns = intersect_columns(df1.columns, df2)
     for column in columns:
@@ -235,16 +236,33 @@ def compare_dataframes(input_df1, input_df2, depth=2):
             _append_message_(column, "different type")
 
         # Tries to retype before to continue comparison
-        col1 = df1[column].dropna()
-        col2 = df2[column].dropna().astype({column: col1.dtypes})
+        df_ = pd.concat([
+            df1[column].rename("df1"),
+            df2[column].rename("df2").astype(df1[column].dtypes)
+        ], axis=1)
 
-        # compare content
-        if not col1.equals(col2):
-            _append_message_(column, "different values")
+        # compare content (first, ignore NA)
+        if not df_.dropna()["df1"].equals(df_.dropna()["df2"]):
+
+            df_ex   = df_.dropna()[df_.dropna()["df1"].ne(df_.dropna()["df2"])]
+            example = str(df_ex.head(3))
+            msg     = "different non-NaN values ({0} inconsistencies)\n\nExamples:\n".format(len(df_ex)) + example
+
+            _append_message_(column, msg)
+
+        # compare content (first, ignore NA)
+        df_1 = df_.isna()["df1"]
+        df_2 = df_.isna()["df2"]
+        df_  = df_[(df_1 | df_2) & ~(df_1 & df_2)  ]
+        if len(df_) > 0:
+            example = str(df_.head(3))
+            msg     = "NaN inconsistencies ({0})\n\nExamples:\n".format(len(df_)) + example
+
+            _append_message_(column, msg)
 
     # Print
 
-    return Comparison(df1, df2, diff, depth=depth)
+    return Comparison(df1, df2, diff, depth=depth, labels=labels)
 
 
 #####################
