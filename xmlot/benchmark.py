@@ -30,7 +30,7 @@ class DefaultBenchmarkVisitor:
     def split(self):
         pass
 
-    def standardisation(self):
+    def scaling(self):
         pass
 
     def binnisation(self):
@@ -102,8 +102,8 @@ class TalkativeBenchmarkVisitor(DefaultBenchmarkVisitor):
     def split(self):
         print("    > Splitting data")
 
-    def standardisation(self):
-        print("    > Standardising data")
+    def scaling(self):
+        print("    > Scaling data")
 
     def binnisation(self):
         print("    > Binning data")
@@ -140,9 +140,9 @@ class AggregateBenchmarkVisitor(DefaultBenchmarkVisitor):
         for vis in self.m_visitors:
             vis.separate()
 
-    def standardisation(self):
+    def scaling(self):
         for vis in self.m_visitors:
-            vis.standardisation()
+            vis.scaling()
 
     def binnisation(self):
         for vis in self.m_visitors:
@@ -179,7 +179,7 @@ def benchmark(
         metric,
         df,
         accessor_code,
-        get_standardiser,
+        get_scaler,
         get_discretiser  = lambda _model_name_, _df_: DefaultDiscretiser(),
         k                = 5,
         test_frac        = .2,
@@ -188,22 +188,22 @@ def benchmark(
 ):
     """
     Args:
-        - models           : a dictionary that stores the models to compare;
-                             each entry is a key-value pair with the key being the model name
-                             and the value a dictionary:
-                             {
-                                 "model"      : instance of untrained model
-                                 "parameters" : training parameters (dictionary)
-                             }
-        - metric           : the metric used to compare models
-        - df               : the DataFrame on which will be performed the benchmark
-        - accessor_code    : a code to ease the access targets and features (via an Accessor)
-        - get_standardiser : a function that returns a Standardiser given a DataFrame
-        - get_discretiser  : a function that returns a Discretiser given a DataFrame
-        - k                : the number of folds for k-fold cross validation
-        - test_frac        : the proportion of data used for test
-        - seed             : set a seed for random numbers generation
-        - visitor          : TODO complete integration
+        - models          : a dictionary that stores the models to compare;
+                            each entry is a key-value pair with the key being the model name
+                            and the value a dictionary:
+                            {
+                                "model"      : instance of untrained model
+                                "parameters" : training parameters (dictionary)
+                            }
+        - metric          : the metric used to compare models
+        - df              : the DataFrame on which will be performed the benchmark
+        - accessor_code   : a code to ease the access targets and features (via an Accessor)
+        - get_scaler      : a function that returns a Scaler given a DataFrame
+        - get_discretiser : a function that returns a Discretiser given a DataFrame
+        - k               : the number of folds for k-fold cross validation
+        - test_frac       : the proportion of data used for test
+        - seed            : set a seed for random numbers generation
+        - visitor         : TODO complete integration
 
     Returns: a Python dictionary that contains for each model the following entries:
         - validation_scores : the list of the validation scores for each fold
@@ -246,10 +246,10 @@ def benchmark(
         pre_df_train = pd.concat([splits[j] for j in range(k) if j != i])
         pre_df_val   = splits[i]
 
-        # We standardise each dataset based on the information we know from the training set.
-        standardiser = get_standardiser(pre_df_train)
-        pre_df_train = standardiser(pre_df_train)
-        pre_df_val   = standardiser(pre_df_val)
+        # We re-scale each dataset based on the information we know from the training set.
+        scaler = get_scaler(pre_df_train)
+        pre_df_train = scaler(pre_df_train)
+        pre_df_val   = scaler(pre_df_val)
 
         # Let's train each model regarding those datasets.
         for model_name in models.keys():
@@ -288,17 +288,17 @@ def benchmark(
         best_model = output[model_name]["instances"][best_i]
         df_train = pd.concat([splits[j] for j in range(k) if j != best_i])
 
-        # We standardise based on the used training dataset.
-        standardiser = get_standardiser(df_train)
-        df_test = standardiser(pre_df_test.copy())
+        # We re-scale based on the used training dataset.
+        scaler = get_scaler(df_train)
+        df_test = scaler(pre_df_test.copy())
 
         # We discretise time.
         discretiser = get_discretiser(model_name, df_train)
         df_test = discretiser(df_test)
 
         # We store the result.
-        output[model_name]["test_score"] = metric(best_model, df_test)
-        output[model_name]["df_test"]           = df_test
-        output[model_name]["best_discretiser"]  = discretiser
-        output[model_name]["best_standardiser"] = standardiser
+        output[model_name]["test_score"]       = metric(best_model, df_test)
+        output[model_name]["df_test"]          = df_test
+        output[model_name]["best_discretiser"] = discretiser
+        output[model_name]["best_scaler"]      = scaler
     return output
