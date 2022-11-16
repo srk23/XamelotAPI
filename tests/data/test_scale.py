@@ -1,7 +1,7 @@
 import numpy  as np
 import pandas as pd
 
-from xmlot.data.standardise import *
+from xmlot.data.scale import *
 from xmlot.data.describe    import Entry, Descriptor
 from xmlot.data.dataframes    import build_survival_accessor
 
@@ -43,14 +43,14 @@ OHE = FakeOHE(DESCRIPTOR)
 
 
 def test_nothing():
-    standardiser = Standardiser(
+    scaler = Scaler(
         DF,
         accessor_code="test_surv",
         ohe=OHE
     )
-    standardised_df = standardiser(DF)
+    untransformed_df = scaler(DF)
 
-    assert standardised_df.equals(DF)
+    assert untransformed_df.equals(DF)
 
 def test_standardisation():
     s = np.sqrt(1 / 2)
@@ -63,7 +63,7 @@ def test_standardisation():
         }
     )
 
-    standardiser = Standardiser(
+    standardiser = Scaler(
         DF,
         "test_surv",
         OHE,
@@ -88,12 +88,12 @@ def test_normalisation():
         }
     )
 
-    standardiser = Standardiser(
+    normaliser = Scaler(
         DF,
         "test_surv",
         OHE,
         **get_normalisation(DF)
     )
-    standardised_df = standardiser(DF)
+    normalised_df = normaliser(DF)
 
-    assert standardised_df.equals(df_)
+    assert normalised_df.equals(df_)
