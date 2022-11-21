@@ -15,6 +15,13 @@ def identity(x):
     return x
 
 
+def gandalf(msg="You shall not pass!"):
+    """
+    A silly function that raises an AssertionError, preventing code to run after a given point.
+    """
+    assert False, msg
+
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
