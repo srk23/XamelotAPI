@@ -239,6 +239,13 @@ def plot_histogram(column, df, descriptor, bins=100):
         bottom = 0
         top = .97 * y_max
 
+        # Display minimum and maximum
+        mini = s.min()
+        ax.plot([mini, mini], [0, y_max], 'r')
+
+        maxi = s.max()
+        ax.plot([maxi, maxi], [0, y_max], 'r', label='min={0}, max={1}'.format(mini, maxi))
+
         rect = phs.Rectangle(
             (left, bottom),
             width,
@@ -249,7 +256,13 @@ def plot_histogram(column, df, descriptor, bins=100):
         plt.gca().add_patch(rect)
 
         # Display legend
-        plt.legend()
+        handles, labels = ax.get_legend_handles_labels()
+        handles = [handles[0], handles[2], handles[1]]
+        labels  = [labels[0] , labels[2] , labels[1] ]
+
+        ax.legend(handles, labels, loc="upper right")
+
+        #plt.legend(loc="upper right")
 
     plt.show()
 
