@@ -1,13 +1,11 @@
 # Benchmarking tools to compare various models on a fair ground.
 # Models can come from various sources as long as they follow the same design (cf. Model in xmlot.models.model)
 
-import time
 
 from   copy   import deepcopy
 import numpy  as     np
 import pandas as     pd
 
-from xmlot.data.discretise  import DefaultDiscretiser
 from xmlot.data.split       import split_dataset
 from xmlot.misc.misc        import set_seed
 
@@ -21,148 +19,80 @@ class DefaultBenchmarkVisitor:
     def __init__(self):
         pass
 
-    def start(self):
+    def split(self, splits, pre_df_test):
         pass
 
-    def new_fold(self, i, k):
+    def fold(self, i, k_fold, scaler, df_train, df_val):
         pass
 
-    def split(self):
+    def fit(self, i, model_name, model, parameters):
         pass
 
-    def scaling(self):
+    def test(self, results):
         pass
 
-    def binnisation(self):
+    def bootstrap(self, i, k_bootstrap, sampled_df_test):
         pass
 
-    def initialisation(self):
-        pass
-
-    def training(self):
-        pass
-
-    def testing(self):
-        pass
-
-    def end_fold(self, performance):
+    def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
         pass
 
     def end(self):
         pass
 
-
-class EvaluationBenchmarkVisitor(DefaultBenchmarkVisitor):
-    def __init__(self):
-        super().__init__()
-        self.m_init_times   = list()
-        self.m_train_times  = list()
-        self.m_test_times   = list()
-        self.m_performances = list()
-        self.m_time         = None
-
-    def start(self):
-        pass
-
-    def new_fold(self, i, k):
-        self.m_time = time.time()
-
-    def training(self):
-        self.m_init_times.append(time.time() - self.m_time)
-        self.m_time = time.time()
-
-    def testing(self):
-        self.m_train_times.append(time.time() - self.m_time)
-        self.m_time = time.time()
-
-    def end_fold(self, performance):
-        self.m_test_times.append(time.time() - self.m_time)
-        self.m_time = time.time()
-        self.m_performances.append(performance)
-
-    def end(self):
-        print("Average training time  : {0}s ; (std: {1})".format(np.mean(self.m_train_times),
-                                                                  np.std(self.m_train_times)))
-        print(
-            "Average execution time : {0}s ; (std: {1})".format(np.mean(self.m_test_times), np.std(self.m_test_times)))
-        print("Average performance    : {0}  ; (std: {1})".format(np.mean(self.m_performances),
-                                                                  np.std(self.m_performances)))
 class TalkativeBenchmarkVisitor(DefaultBenchmarkVisitor):
     def __init__(self):
         super().__init__()
 
-    def start(self):
-        pass
+    def split(self, splits, pre_df_test):
+        print("\ntraining data: {0}, validation data: {1}, test data: {2}\n".format(
+            len(splits[0]) * (len(splits) - 1),
+            len(splits[0]),
+            len(pre_df_test)
+        ))
+        print("\n--- TRAINING ---\n")
 
-    def new_fold(self, i, k):
-        if i > 0:
-            print()
-        print("Fold {0} / {1}".format(i+1, k))
+    def fold(self, i, k_fold, scaler, df_train, df_val):
+        print("> Fold {0}/{1}".format(i+1, k_fold))
 
-    def split(self):
-        print("    > Splitting data")
+    def test(self, results):
+        print("\n--- TESTING ---\t")
 
-    def scaling(self):
-        print("    > Scaling data")
+    def bootstrap(self, i, k_bootstrap, sampled_df_test):
+        print("> Bootstrap {0}/{1}".format(i+1, k_bootstrap))
 
-    def binnisation(self):
-        print("    > Binning data")
+    def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
+        print("\t> {0}".format(model_name))
 
-    def initialisation(self):
-        print("    > Model initialisation")
-
-    def training(self):
-        print("    > Training model")
-
-    def testing(self):
-        print("    > Testing model")
-
-    def end_fold(self, performance):
-        pass
-
-    def end(self):
-        print()
 
 class AggregateBenchmarkVisitor(DefaultBenchmarkVisitor):
     def __init__(self, list_of_evaluation_visitors):
         super().__init__()
         self.m_visitors = list_of_evaluation_visitors
 
-    def start(self):
+    def split(self, splits, pre_df_test):
         for vis in self.m_visitors:
-            vis.start()
+            vis.split(splits, pre_df_test)
 
-    def new_fold(self, i, k):
+    def fold(self, i, k_fold, scaler, df_train, df_val):
         for vis in self.m_visitors:
-            vis.new_fold(i, k)
+            vis.fold(i, k_fold, scaler, df_train, df_val)
 
-    def split(self):
+    def fit(self, i, model_name, model, parameters):
         for vis in self.m_visitors:
-            vis.separate()
+            vis.fit(i, model_name, model, parameters)
 
-    def scaling(self):
+    def test(self, results):
         for vis in self.m_visitors:
-            vis.scaling()
+            vis.test(results)
 
-    def binnisation(self):
+    def bootstrap(self, i, k_bootstrap, sampled_df_test):
         for vis in self.m_visitors:
-            vis.binnisation()
+            vis.bootstrap(i, k_bootstrap, sampled_df_test)
 
-    def initialisation(self):
+    def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
         for vis in self.m_visitors:
-            vis.initialisation()
-
-    def training(self):
-        for vis in self.m_visitors:
-            vis.training()
-
-    def testing(self):
-        for vis in self.m_visitors:
-            vis.testing()
-
-    def end_fold(self, performance):
-        for vis in self.m_visitors:
-            vis.end_fold(performance)
+            vis.predict(i, model_name, best_model, df_train, scaler, sampled_df_test)
 
     def end(self):
         for vis in self.m_visitors:
@@ -178,39 +108,38 @@ def benchmark(
         models,
         metric,
         df,
-        accessor_code,
+        stratification_target,
         get_scaler,
-        get_discretiser  = lambda _model_name_, _df_: DefaultDiscretiser(),
-        k                = 5,
+        k_fold           = 5,
         test_frac        = .2,
+        k_bootstrap      = 10,
+        bootstrap_frac   = .5,
         seed             = None,
         visitor          = DefaultBenchmarkVisitor()
 ):
     """
     Args:
-        - models          : a dictionary that stores the models to compare;
-                            each entry is a key-value pair with the key being the model name
-                            and the value a dictionary:
-                            {
-                                "model"      : instance of untrained model
-                                "parameters" : training parameters (dictionary)
-                            }
-        - metric          : the metric used to compare models
-        - df              : the DataFrame on which will be performed the benchmark
-        - accessor_code   : a code to ease the access targets and features (via an Accessor)
-        - get_scaler      : a function that returns a Scaler given a DataFrame
-        - get_discretiser : a function that returns a Discretiser given a DataFrame
-        - k               : the number of folds for k-fold cross validation
-        - test_frac       : the proportion of data used for test
-        - seed            : set a seed for random numbers generation
-        - visitor         : TODO complete integration
+        - models                : a dictionary that stores the models to compare;
+                                  each entry is a key-value pair with the key being the model name
+                                  and the value a dictionary:
+                                  {
+                                      "model"      : instance of untrained model
+                                      "parameters" : training parameters (dictionary)
+                                  }
+        - metric                : the metric used to compare models
+        - df                    : the DataFrame on which will be performed the benchmark
+        - stratification_target : specify the target used for stratification (during split)
+        - get_scaler            : a function that returns a Scaler given a DataFrame
+        - k_fold                : the number of folds for k-fold cross validation
+        - test_frac             : the proportion of data used for test
+        - seed                  : set a seed for random numbers generation
+        - visitor               : TODO complete integration
 
     Returns: a Python dictionary that contains for each model the following entries:
         - validation_scores : the list of the validation scores for each fold
         - instances         : the list of the corresponding instances
         - test_score        : the score on test data reached by the best instance
     """
-    visitor.start()
 
     # Set seed if required
     if seed is not None:
@@ -219,44 +148,45 @@ def benchmark(
     else:
         random_states_split = (None, None)
 
-    # Initialise output
-    output = {model_name: {
+    # Initialise results
+    results = {model_name: {
+        "instances"        : list(),
         "validation_scores": list(),
-        "instances": list()
+        "test_scores"      : list()
     } for model_name in models.keys()}
 
     # We split the data, reserving some for testing (taken from the most recent entries)
     # Split is stratified
-    accessor_df = getattr(df, accessor_code)
-    pre_df_test, df_ = split_dataset(
+    df_, pre_df_test = split_dataset(
         df,
-        [test_frac, 1 - test_frac],
-        main_target=accessor_df.stratification_target
+        [1 - test_frac, test_frac],
+        main_target=stratification_target
     )
 
     # We split the remaining part in k folds.
     splits = split_dataset(
-        df_, [1 / k] * k,
-        main_target=accessor_df.stratification_target,
+        df_,
+        [1 / k_fold] * k_fold,
+        main_target=stratification_target,
         random_states=random_states_split
     )
 
-    for i in range(k):
+    visitor.split(splits=splits, pre_df_test=pre_df_test)
+
+    for i in range(k_fold):
         # Then we arrange data as train / validation sets
-        pre_df_train = pd.concat([splits[j] for j in range(k) if j != i])
+        pre_df_train = pd.concat([splits[j] for j in range(k_fold) if j != i])
         pre_df_val   = splits[i]
 
         # We re-scale each dataset based on the information we know from the training set.
         scaler = get_scaler(pre_df_train)
-        pre_df_train = scaler(pre_df_train)
-        pre_df_val   = scaler(pre_df_val)
+        df_train = scaler(pre_df_train)
+        df_val   = scaler(pre_df_val)
+
+        visitor.fold(i, k_fold, scaler, df_train, df_val)
 
         # Let's train each model regarding those datasets.
         for model_name in models.keys():
-            # Depending on the model, we may need to discretise some target columns (eg. time).
-            discretiser = get_discretiser(model_name, pre_df_train)
-            df_train    = discretiser(pre_df_train.copy())
-            df_val      = discretiser(pre_df_val.copy())
 
             # We take a copy of the untrained model: we train it and return the corresponding validation score.
             model = deepcopy(models[model_name]["model"])
@@ -268,37 +198,53 @@ def benchmark(
             parameters["val_data"] = df_val
 
             # Train
-            accessor_train = getattr(df_train, accessor_code)
             model = model.fit(
-                accessor_train.features,
-                accessor_train.targets,
+                df_train,
                 parameters
             )
+
             # ... and validate
             validation_score = metric(model, df_val)
 
-            # We store the results obtained with our model for that fold.
-            output[model_name]["validation_scores"].append(validation_score)
-            output[model_name]["instances"].append(model)
+            # We store the results respective to the current model for that fold.
+            visitor.fit(i, model_name, model, parameters)
+            results[model_name]["validation_scores"].append(validation_score)
+            results[model_name]["instances"].append(model)
+
+    visitor.test(results)
 
     # Now, we test the best instance of each model on our test data.
-    for model_name in models.keys():
-        # We get back the best instance.
-        best_i = np.argmax(output[model_name]["validation_scores"])
-        best_model = output[model_name]["instances"][best_i]
-        df_train = pd.concat([splits[j] for j in range(k) if j != best_i])
+    # We repeat `k_bootstrap` times the same test.
+    for i in range(k_bootstrap):
+        # We select a random sample of the test data.
+        sampled_df_test, _ = split_dataset(
+            pre_df_test.copy(),
+            [bootstrap_frac, 1 - bootstrap_frac],
+            main_target=stratification_target
+        )
 
-        # We re-scale based on the used training dataset.
-        scaler = get_scaler(df_train)
-        df_test = scaler(pre_df_test.copy())
+        visitor.bootstrap(i, k_bootstrap, sampled_df_test)
 
-        # We discretise time.
-        discretiser = get_discretiser(model_name, df_train)
-        df_test = discretiser(df_test)
+        # We compute the performance score over that sample for each model.
+        for model_name in models.keys():
+            # We get back the best instance.
+            best_i     = np.argmax(results[model_name]["validation_scores"])
+            best_model = results[model_name]["instances"][best_i]
+            df_train   = pd.concat([splits[j] for j in range(k_fold) if j != best_i])
 
-        # We store the result.
-        output[model_name]["test_score"]       = metric(best_model, df_test)
-        output[model_name]["df_test"]          = df_test
-        output[model_name]["best_discretiser"] = discretiser
-        output[model_name]["best_scaler"]      = scaler
-    return output
+            # We re-scale based on the used training dataset.
+            scaler          = get_scaler(df_train)
+            sampled_df_test = scaler(sampled_df_test)
+
+            visitor.predict(i, model_name, best_model, df_train, scaler, sampled_df_test)
+
+            # We store the result.
+            results[model_name]["test_scores"].append(
+                metric(
+                    best_model,
+                    sampled_df_test
+                )
+            )
+
+    visitor.end()
+    return results

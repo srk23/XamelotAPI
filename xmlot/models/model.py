@@ -15,48 +15,54 @@ class Model:
 
     """
 
-    def __init__(self, accessor_code, hyperparameters=None):
+    def __init__(self, accessor_code=None, hyperparameters=None):
         """
         Args:
-            - accessor_code: a code to relate to an Accessor 
-                             (which aims at enhancing the use of pandas DataFrames).
+            - accessor_code  : an optional accessor code to handle (training) data
+            - hyperparameters: a dict of parameters that defines the model (e.g. neural architecture, k for k-NN, etc.).
         """
-        self.m_accessor_code = accessor_code
+        self.m_accessor_code   = accessor_code
         self.m_hyperparameters = hyperparameters if hyperparameters is not None else dict()
 
     @property
     def accessor_code(self):
         return self.m_accessor_code
 
+    @accessor_code.setter
+    def accessor_code(self, new_code):
+        self.m_accessor_code = new_code
+
     @property
     def hyperparameters(self):
         return self.m_hyperparameters
 
-    @hyperparameters.setter
-    def hyperparameters(self, hyperparameters):
-        self.hyperparameters = hyperparameters
-
-    def fit(self, x_train, y_train, parameters=None):
+    def fit(self, data_train, parameters=None):
         """
-        Following SciKit's design.
+        Depending on the type of model (e.g. supervised, unsupervised, etc.) or the type of problem
+        (e.g. classification, survival analysis, etc.), the way data is used can vary. Therefore, we provide the whole
+        dataset as input and let the model takes what it needs for training.
+
+        This allows to compare models that trains differently as lons as their predictions can be compared with regard
+        to the same metric.
 
         Args:
-            - x_train    : a DataFrame that contains all a set of unlabeled data points.
-            - y_train    : a DataFrame that contains the corresponding labels for each point of 'x_train'.
-                           The shape of this DataFrame can vary depending on the problem of interest.
+            - data_train : a DataFrame that contains the data to train from.
             - parameters : model related parameters for training.
 
         Returns: the trained model.
         """
-        _ = (x_train, y_train, parameters)
+        _ = (data_train, parameters)
         return self
 
-    def predict(self, x):
+    def predict(self, x, parameters=None):
         """
-        Following SciKit's design.
+        Follows SciKit's design.
+
+        Naturally, any target column must not be provided to the model at this stage.
 
         Args:
-            - x : a DataFrame that represents a set of data points.
+            - x          : a DataFrame that represents a set of data points.
+            - parameters : model related parameters for prediction.
 
         Returns: the predictions for each data point.
         """
@@ -68,8 +74,11 @@ class FromTheShelfModel(Model):
     Wrap any existing model implementation into the present framework.
     """
 
-    def __init__(self, accessor_code, hyperparameters=None):
-        super().__init__(accessor_code, hyperparameters)
+    def __init__(self, accessor_code=None, hyperparameters=None):
+        super().__init__(
+            accessor_code   = accessor_code,
+            hyperparameters = hyperparameters
+        )
         self.m_model = None
 
     @property

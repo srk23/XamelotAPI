@@ -4,12 +4,12 @@ from lifelines.utils  import concordance_index
 from pycox.evaluation import EvalSurv
 from sksurv.datasets  import get_x_y
 
-from xmlot.models.survival.shelf import LifelinesCoxModel,    \
-                                          ScikitCoxModel,       \
-                                          DeepSurv,             \
-                                          DeepHit,              \
-                                          RandomSurvivalForest, \
-                                          XGBoost
+from xmlot.models.lifelines import LifelinesCoxModel
+from xmlot.models.scikit    import ScikitCoxModel,       \
+                                   RandomSurvivalForest, \
+                                   XGBoost
+from xmlot.models.pycox     import DeepSurv,             \
+                                   DeepHit
 
 
 ############################
@@ -30,7 +30,7 @@ def _skcox_score(model, df_test):
     a_test = getattr(df_test, model.accessor_code)
 
     x, _ = get_x_y(
-        df_test,
+        a_test.df,
         [a_test.event, a_test.duration],
         pos_label=1,
         survival=True
@@ -46,7 +46,7 @@ def _sksurv_score_(model, df_test):
     a_test = getattr(df_test, model.accessor_code)
 
     x, y = get_x_y(
-        df_test,
+        a_test.df,
         [a_test.event, a_test.duration],
         pos_label=1,
         survival=True
@@ -80,7 +80,7 @@ def _deephit_score_(model, df_test):
 #      CONCORDANCE      #
 #########################
 
-def concordance(model, df_test):
+def concordance(model, df_test, **_):
     """
     TODO: implement a concordance score that does not depend on the type of model!
     """

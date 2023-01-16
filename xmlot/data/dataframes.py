@@ -7,7 +7,7 @@ from warnings   import catch_warnings, simplefilter
 from contextlib import nullcontext
 
 from xmlot.misc.misc           import get_var_name
-from xmlot.misc.lists import difference, intersection
+from xmlot.misc.lists import difference, intersection, union
 
 
 #####################
@@ -18,7 +18,7 @@ from xmlot.misc.lists import difference, intersection
 # https://pandas.pydata.org/docs/development/extending.html#registering-custom-accessors
 
 
-def build_survival_accessor(event, duration, accessor_code="surv", disable_warning=True):
+def build_survival_accessor(event, duration, accessor_code="surv", exceptions=(), disable_warning=True):
     """
     Build an accessor dedicated to the management of survival data.
 
@@ -45,12 +45,14 @@ def build_survival_accessor(event, duration, accessor_code="surv", disable_warni
                 self.m_event          = event
                 self.m_duration       = duration
                 self.m_stratification = event
+                self.m_exceptions     = exceptions
 
             @staticmethod
             def _validate(obj):
-                # verify there is a column latitude and a column longitude
-                if event not in obj.columns or duration not in obj.columns:
-                    raise AttributeError("Must have {0} and {1}.".format(event, duration))
+                pass
+                # # verify there is a column latitude and a column longitude
+                # if event not in obj.columns or duration not in obj.columns:
+                #     raise AttributeError("Must have {0} and {1}.".format(event, duration))
 
             @property
             def event(self):
@@ -78,7 +80,7 @@ def build_survival_accessor(event, duration, accessor_code="surv", disable_warni
 
             @property
             def features_list(self):
-                return difference(self._obj.columns, self.target)
+                return difference(self._obj.columns, union(self.target, self.m_exceptions))
 
             @property
             def features(self):
@@ -88,10 +90,14 @@ def build_survival_accessor(event, duration, accessor_code="surv", disable_warni
             def stratification_target(self):
                 return self.m_stratification
 
+            @property
+            def df(self):
+                return self._obj.drop(columns=self.m_exceptions)
+
     return SurvivalAccessor
 
 
-def build_classification_accessor(target, accessor_code="class", disable_warning=True):
+def build_classification_accessor(target, accessor_code="class", exceptions=(), disable_warning=True):
     """
     Build an accessor dedicated to the management of data for classification.
 
@@ -116,11 +122,13 @@ def build_classification_accessor(target, accessor_code="class", disable_warning
 
                 self.m_target         = target
                 self.m_stratification = target
+                self.m_exceptions     = exceptions
 
             @staticmethod
             def _validate(obj):
-                if target not in obj.columns:
-                    raise AttributeError("Must have {0}.".format(target))
+                pass
+                # if target not in obj.columns:
+                #     raise AttributeError("Must have {0}.".format(target))
 
             @property
             def target(self):
@@ -132,7 +140,7 @@ def build_classification_accessor(target, accessor_code="class", disable_warning
 
             @property
             def features_list(self):
-                return difference(self._obj.columns, self.target)
+                return difference(self._obj.columns, union(self.target, self.m_exceptions))
 
             @property
             def features(self):
@@ -141,6 +149,10 @@ def build_classification_accessor(target, accessor_code="class", disable_warning
             @property
             def stratification_target(self):
                 return self.m_stratification
+
+            @property
+            def df(self):
+                return self._obj.drop(columns=self.m_exceptions)
 
     return ClassificationAccessor
 
