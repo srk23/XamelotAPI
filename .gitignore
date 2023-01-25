@@ -11,3 +11,4 @@ dist
 .idea
 xmlot.egg-info/
 notebooks/weight_checkpoint*
+notebooks/.ipynb_checkpoints/
