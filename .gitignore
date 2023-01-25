@@ -10,3 +10,4 @@ dist
 .pytest_cache
 .idea
 xmlot.egg-info/
+notebooks/weight_checkpoint*
