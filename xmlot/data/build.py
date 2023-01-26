@@ -4,7 +4,7 @@ import numpy  as np
 import pandas as pd
 
 from xmlot.misc.clinical import compute_egfr
-
+from xmlot.misc.lists    import difference
 
 def build_egfr(input_df, creatinine_column):
     """
@@ -153,3 +153,35 @@ def build_msurv(s, columns=("psurv", "gsurv")):
     if pd.notna(s[psurv]) and pd.notna(s[gsurv]):
         return min(s[psurv], s[gsurv])
     return pd.NA
+
+def build_classification_from_survival(
+    df,
+    t,
+    accessor_code
+):
+    """
+    Args:
+        - df            : the input DataFrame;
+        - t             : the span of time in which we want to predict the occurrence of events of interests.
+        - accessor_code :
+
+    Returns: a column that provides the corresponding labels for classification.
+    """
+    def _f_(_i_): return 0 if _i_ == 0 else _i_ + 1
+
+    acc = getattr(df, accessor_code)
+
+    # Initialisation
+    s = pd.DataFrame(np.nan, index=df.index, columns=df.columns)[acc.event]
+
+    # Get Alive labels
+    s = s.mask(
+        (acc.durations > t),
+        other=1
+    )
+
+    # Get other labels
+    for i, event in enumerate(difference(df[acc.event].value_counts().index, ["Unknown"])):
+        s = s.mask(((acc.durations <= t) & (acc.events == event)), other=_f_(i))
+
+    return s

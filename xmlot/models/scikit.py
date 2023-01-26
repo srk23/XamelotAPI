@@ -3,6 +3,8 @@
 #
 # More details on: https://scikit-learn.org/stable/ ; https://scikit-survival.readthedocs.io/en/stable/
 
+import numpy as np
+
 from sklearn.naive_bayes    import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble       import RandomForestClassifier, AdaBoostClassifier
@@ -35,12 +37,11 @@ class ScikitClassificationModel(FromTheShelfModel):
 
     def fit(self, data_train, parameters=None):
         accessor = getattr(data_train, self.accessor_code)
-        x_train  = accessor.features
-
-        x_train = x_train.values
+        x_train  = accessor.features.values
         y_train  = accessor.targets.values.ravel()
 
         self.m_model.fit(x_train, y_train)
+
         return self
 
     def predict(self, x, parameters=None):

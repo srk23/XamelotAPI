@@ -76,7 +76,9 @@ class OneHotEncoder:
         # In other words, the corresponding matrix would not be invertible in that case.
         # Then, a given column can be seen as a linear combination of the other ones.
 
-        encoded_df = df.copy().replace(pd.NA, np.nan)
+        encoded_df = df.copy()
+        if pd.isna(encoded_df).any().any():
+            encoded_df = encoded_df.replace(to_replace=pd.NA, value=np.nan)
         self.m_dtypes = df.dtypes
 
         idx_cols = list()

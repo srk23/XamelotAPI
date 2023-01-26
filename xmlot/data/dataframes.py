@@ -92,7 +92,7 @@ def build_survival_accessor(event, duration, accessor_code="surv", exceptions=()
 
             @property
             def df(self):
-                return self._obj.drop(columns=self.m_exceptions)
+                return self._obj.drop(columns=self.m_exceptions, errors="ignore")
 
     return SurvivalAccessor
 
@@ -152,7 +152,7 @@ def build_classification_accessor(target, accessor_code="class", exceptions=(), 
 
             @property
             def df(self):
-                return self._obj.drop(columns=self.m_exceptions)
+                return self._obj.drop(columns=self.m_exceptions, errors="ignore")
 
     return ClassificationAccessor
 

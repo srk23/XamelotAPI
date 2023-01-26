@@ -10,27 +10,27 @@ from xmlot.misc.lists import difference
 ############################
 
 
-def select_targets(df, accessor_code, descriptor):
+def select_targets(df, targets_to_focus, descriptor):
     """
     Remove any row with any unknown target. Unused targets are removed.
 
     Args:
-        - df            : the input DataFrame;
-        - accessor_code : a code that points to an accessor of df;
-        - descriptor    : a Descriptor.
+        - df               : the input DataFrame;
+        - targets_to_focus : a set of targets we want to focus on;
+        - descriptor       : a Descriptor.
 
     Returns:
         A DataFrame with all targets but the one mentionned dropped ;
         any row that contains missing value regarding the selected target is dropped as well.
     """
-    target_to_focus   = getattr(df, accessor_code).target
     targets_to_ignore = difference(
         [column for column in df.columns if descriptor.get_entry(column).tags == "target"],
-        target_to_focus
+        targets_to_focus
     )
 
     return df.drop(columns=targets_to_ignore) \
-             .dropna(axis=0, subset=target_to_focus, how='any')
+             .dropna(axis=0, subset=targets_to_focus, how='any')
+
 
 def extract_dense_dataframe(df, threshold):
     """
@@ -91,7 +91,7 @@ class DefaultEmbedDataVisitor:
         separator,
         exceptions,
         default_categories,
-        accessor_code
+        targets_to_focus
     ): pass
 
     def select_targets(self, df, target, encode_parameters_manager): pass
@@ -117,17 +117,17 @@ class TalkativeEmbedDataVisitor(DefaultEmbedDataVisitor):
         separator,
         exceptions,
         default_categories,
-        accessor_code
+        targets_to_focus
     ):
         string_output  = "Starting embedding...\n"
         string_output += "\tBefore embedding, the dataset has {0} rows and {1} columns.".format(*df.shape)
 
         print(string_output)
 
-    def select_targets(self, df, accessor_code, descriptor):
+    def select_targets(self, df, targets_to_focus, descriptor):
         string_output  = "\nSelecting targets...\n"
-        string_output += "\tWe focus on the following targets: `{0}`, `{1}`.\n".format(
-            *getattr(df, accessor_code).target
+        string_output += "\tWe focus on the following targets: `{0}`.\n".format(
+            targets_to_focus
         )
         string_output += "\tThen, the dataset has {0} rows and {1} columns.".format(*df.shape)
 
@@ -159,7 +159,7 @@ def embed_data(
         separator,
         exceptions,
         default_categories,
-        accessor_code,
+        targets_to_focus,
         visitor=DefaultEmbedDataVisitor()
 ):
     """
@@ -175,7 +175,7 @@ def embed_data(
         - threshold                 : the density threshold;
         - descriptor                : values that are generally used to mark unknown values;
         - encode_parameters_manager : an EncodeParametersManager for the one hot encoding step;
-        - accessor_code             : code to access extended properties (for example: `df.surv.event`);
+        - targets_to_focus          : targets
         - visitor                   : a visitor for additional/optional functionalities.
 
     Returns:
@@ -190,11 +190,11 @@ def embed_data(
         separator,
         exceptions,
         default_categories,
-        accessor_code
+        targets_to_focus
     )
 
-    df = select_targets(df, accessor_code, descriptor)
-    visitor.select_targets(df, accessor_code, descriptor)
+    df = select_targets(df, targets_to_focus, descriptor)
+    visitor.select_targets(df, targets_to_focus, descriptor)
 
     df = extract_dense_dataframe(df, threshold)
     visitor.extract_dense_dataframe(df, threshold)

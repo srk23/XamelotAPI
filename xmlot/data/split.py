@@ -29,3 +29,7 @@ def split_dataset(df, fracs, main_target, random_states=(None, None)):
         splits.append(split_df)
 
     return splits
+
+def sample_dataset(df, n, main_target, random_states=(None, None)):
+    N = len(df)
+    return split_dataset(df, fracs=[n / N, (N - n) / N], main_target=main_target, random_states=random_states)[0]

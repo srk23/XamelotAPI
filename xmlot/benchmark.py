@@ -40,30 +40,6 @@ class DefaultBenchmarkVisitor:
     def end(self):
         pass
 
-class TalkativeBenchmarkVisitor(DefaultBenchmarkVisitor):
-    def __init__(self):
-        super().__init__()
-
-    def split(self, splits, pre_df_test):
-        print("\ntraining data: {0}, validation data: {1}, test data: {2}\n".format(
-            len(splits[0]) * (len(splits) - 1),
-            len(splits[0]),
-            len(pre_df_test)
-        ))
-        print("\n--- TRAINING ---\n")
-
-    def fold(self, i, k_fold, scaler, df_train, df_val):
-        print("> Fold {0}/{1}".format(i+1, k_fold))
-
-    def test(self, results):
-        print("\n--- TESTING ---\t")
-
-    def bootstrap(self, i, k_bootstrap, sampled_df_test):
-        print("> Bootstrap {0}/{1}".format(i+1, k_bootstrap))
-
-    def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
-        print("\t> {0}".format(model_name))
-
 
 class AggregateBenchmarkVisitor(DefaultBenchmarkVisitor):
     def __init__(self, list_of_evaluation_visitors):
@@ -97,6 +73,34 @@ class AggregateBenchmarkVisitor(DefaultBenchmarkVisitor):
     def end(self):
         for vis in self.m_visitors:
             vis.end()
+
+
+class TalkativeBenchmarkVisitor(DefaultBenchmarkVisitor):
+    def __init__(self):
+        super().__init__()
+
+    def split(self, splits, pre_df_test):
+        print("\ntraining data: {0}, validation data: {1}, test data: {2}\n".format(
+            len(splits[0]) * (len(splits) - 1),
+            len(splits[0]),
+            len(pre_df_test)
+        ))
+        print("\n--- TRAINING ---\n")
+
+    def fold(self, i, k_fold, scaler, df_train, df_val):
+        print("> Fold {0}/{1}".format(i+1, k_fold))
+
+    def fit(self, i, model_name, model, parameters):
+        print("\t> {0}".format(model_name))
+
+    def test(self, results):
+        print("\n--- TESTING ---\n")
+
+    def bootstrap(self, i, k_bootstrap, sampled_df_test):
+        print("> Bootstrap {0}/{1}".format(i+1, k_bootstrap))
+
+    def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
+        print("\t> {0}".format(model_name))
 
 
 #####################
@@ -133,7 +137,7 @@ def benchmark(
         - k_fold                : the number of folds for k-fold cross validation
         - test_frac             : the proportion of data used for test
         - seed                  : set a seed for random numbers generation
-        - visitor               : TODO complete integration
+        - visitor               : inherits from DefaultBenchmarkVisitor, giving access to optional features
 
     Returns: a Python dictionary that contains for each model the following entries:
         - validation_scores : the list of the validation scores for each fold
