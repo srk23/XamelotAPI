@@ -4,15 +4,19 @@ import numpy  as np
 import pandas as pd
 
 from xmlot.data.build      import build_egfr,       \
-                                    build_max,        \
-                                    build_min,        \
-                                    build_easy_trend, \
-                                    build_binary_code,\
-                                    build_mcens,      \
-                                    build_msurv
+                                  build_max,        \
+                                  build_min,        \
+                                  build_easy_trend, \
+                                  build_binary_code,\
+                                  build_pcens,      \
+                                  build_psurv,      \
+                                  build_tcens,      \
+                                  build_tsurv,      \
+                                  build_mcens,      \
+                                  build_msurv
 from xmlot.data.dataframes import build_empty_mask, \
-                                    intersect_columns,\
-                                    get_constant_columns
+                                  intersect_columns,\
+                                  get_constant_columns
 
 from xmlot.misc.clinical   import compute_bmi
 
@@ -218,6 +222,21 @@ def transform_dialysis_columns(df, descriptor, **_):
     df.loc[df['dial_code'].isin([3, 6, 8, 30, 33, 35, 44, 62]), "dial_type"] = df["dial_at_reg"]
     df.loc[df['dial_code'] == 27, "dial_type"] = "Not on dialysis"
 
+    # Minor adjustments for the "Not on dialysis" entries
+    # Unknown dial_days are set to zero when dial_type is "Not on dialysis".
+    df["dial_days"] = df["dial_days"].mask(
+        (df["dial_type"] == "Not on dialysis")
+        & df["dial_days"].isna(),
+        other=0
+    )
+
+    # dial_days and dial_type are set to NaN when they have contradictory values ("Not on dialysis" vs >0 dial days).
+    df[["dial_days", "dial_type"]] = df[["dial_days", "dial_type"]].mask(
+        (df["dial_type"] == "Not on dialysis")
+        & df["dial_days"] > 0,
+        other=np.nan
+    )
+
     return df.drop(columns=['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'])
 
 
@@ -309,6 +328,22 @@ def categorise(df, columns_to_categorise, **_):
         columns_to_drop.append(key)
     return df.drop(columns=columns_to_drop)
 
+def impute_targets(df, **_):
+    """
+    Fix pcens/psurv and ecens/esurv columns
+
+    Args:
+        - df                  : a DataFrame.
+
+    Returns: the updated DataFrame.
+    """
+    df['pcens'] = build_pcens(df)
+    df['psurv'] = build_psurv(df)
+
+    df['tcens'] = df.apply(build_tcens, axis=1)
+    df['tsurv'] = df.apply(build_tsurv, axis=1)
+
+    return df
 
 def impute_multirisk(df, **_):
     """
@@ -319,17 +354,10 @@ def impute_multirisk(df, **_):
 
     Returns: the updated DataFrame.
     """
-    def _booleanise_(x):
-        if pd.isna(x):
-            return pd.NA
-        if x == "Censored":
-            return False
-        return True
-
-    df[['rdeath_bool', 'gcens_bool']] = df[['rdeath', 'gcens']].applymap(_booleanise_)
-    df['mcens'] = df.apply(lambda s: build_mcens(s, pcens="rdeath_bool", gcens="gcens_bool"), axis=1)
+    df['mcens'] = df.apply(build_mcens, axis=1)
     df['msurv'] = df.apply(build_msurv, axis=1)
-    return df.drop(columns=['rdeath_bool', 'gcens_bool'])
+
+    return df
 
 
 def add_unknown_category(df, columns_with_unknowns, unknown, **_):
@@ -433,6 +461,7 @@ CLEANING_STEPS = (
     recompute_egfr,
     impute_biolevels,
     categorise,
+    impute_targets,
     impute_multirisk,
     replace,
     add_unknown_category,

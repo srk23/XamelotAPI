@@ -17,11 +17,82 @@ DF6 = pd.DataFrame(
     })
 
 DF7 = pd.DataFrame({
-    "pcens": [True , True, False, True, False, False, True ],
+    "pcens": ["Event"   , "Event"  , "Censored", "Event"  , "Censored", "Censored", "Event"   ],
     "psurv": [1    , 1   , 0    , 0   , 0    , 0    , 0    ],
-    "gcens": [False, True, True , True, False, True , False],
+    "gcens": ["Censored", "Event"  , "Event"   , "Event"  , "Censored", "Event"   , "Censored"],
     "gsurv": [0    , 0   , 1    , 1   , 0    , 0    , 0    ]
 })
+
+DF8 = pd.DataFrame({
+    "gcens": ["Censored", "Censored", "Event", "Event"   , "Censored"],
+    "gsurv": [0         , 1         , 1      , 1         , 1         ],
+    "pcens": ["Censored", "Censored", "Event", "Censored", "Event"   ],
+    "psurv": [1         , 0         , 0      , 0         , 0         ]
+})
+
+###############
+#   TARGETS   #
+###############
+
+
+def test_build_pcens():
+    s_target   = pd.Series([-1, -1, -1, 1, 1, 1, 0, 0, 0])
+    s_obtained = build_pcens(DF6, pcens="B", censored=-1)
+
+    assert s_obtained.equals(s_target)
+
+
+def test_build_psurv():
+    s_target   = pd.Series([pd.NA, -2, 5, 1, 1, 1, 0, 0, 0])
+    s_obtained = build_psurv(DF6, gsurv="A", psurv="B")
+
+    assert s_obtained.equals(s_target)
+
+
+def test_build_tcens():
+    s_target = pd.Series([
+        "Event", "Event", "Event", "Event", "Censored", "Event", "Event"
+    ])
+    s_obtained = DF7.apply(lambda s: build_tcens(s, event="Event"), axis=1)
+
+    assert s_obtained.equals(s_target)
+
+
+def test_build_tsurv():
+    s_target = pd.Series([0, 0, 1, 1, 0])
+    s_obtained = DF8.apply(build_tsurv, axis=1)
+
+    assert s_obtained.equals(s_target)
+
+
+def test_build_mcens():
+    s_target = pd.Series(
+        [
+            "Censored",
+            "Graft failure",
+            "Censored",
+            "Deceased",
+            "Censored",
+            "Graft failure",
+            "Deceased"
+        ]
+    )
+    s_obtained = DF7.apply(lambda s: build_mcens(s, pcens="pcens"), axis=1)
+
+    assert s_obtained.equals(s_target)
+
+
+def test_build_msurv():
+    s_target = pd.Series([0] * 7)
+    s_obtained = DF7.apply(build_msurv, axis=1)
+
+    assert s_obtained.equals(s_target)
+
+
+################
+#   FEATURES   #
+################
+
 
 def test_build_easy_trend():
     s = build_easy_trend(DF4, ['col_10', 'col_20'])
@@ -50,26 +121,4 @@ def test_build_binary_code():
     print(s)
     print(s_)
     assert s.equals(s_)
-
-def test_build_mcens():
-    s_target = pd.Series(
-        [
-            "Censored",
-            "Graft failure"     ,
-            "Censored",
-            "Deceased"                     ,
-            "Censored",
-            "Graft failure"     ,
-            "Deceased"
-        ]
-    )
-    s_obtained = DF7.apply(lambda s: build_mcens(s, pcens="pcens"), axis=1)
-
-    assert s_obtained.equals(s_target)
-
-def test_build_msurv():
-    s_target = pd.Series([0] * 7)
-    s_obtained = DF7.apply(build_msurv, axis=1)
-
-    assert s_obtained.equals(s_target)
 

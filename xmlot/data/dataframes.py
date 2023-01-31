@@ -18,7 +18,7 @@ from xmlot.misc.lists import difference, intersection, union
 # https://pandas.pydata.org/docs/development/extending.html#registering-custom-accessors
 
 
-def build_survival_accessor(event, duration, accessor_code="surv", exceptions=(), disable_warning=True):
+def build_survival_accessor(event, duration, accessor_code="surv", exceptions=tuple(), disable_warning=True):
     """
     Build an accessor dedicated to the management of survival data.
 

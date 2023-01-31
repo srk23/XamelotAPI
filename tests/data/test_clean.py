@@ -37,7 +37,7 @@ DF5 = pd.DataFrame({
     'amylase_81': [0.0, 5.0, 1.0]
 })
 DF6 = pd.DataFrame({
-    "rdeath": ["Event"   , "Event", "Censored", "Event", "Censored", "Censored", "Event"   ],
+    "pcens": ["Event"   , "Event", "Censored", "Event", "Censored", "Censored", "Event"   ],
     "psurv" : [1         , 1      , 0         , 0      , 0         , 0         , 0         ],
     "gcens" : ["Censored", "Event", "Event"   , "Event", "Censored", "Event"   , "Censored"],
     "gsurv" : [0         , 0      , 1         , 1      , 0         , 0         , 0         ]
