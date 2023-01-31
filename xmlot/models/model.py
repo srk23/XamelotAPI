@@ -1,9 +1,15 @@
 # Provide a standard design regarding models.
 
+
+##############
+#   MODELS   #
+##############
+
+
 class Model:
     """
     This Class introduces a framework to unify various models and implementations.
-    It is inspired from the SciKit API's design (cf. https://arxiv.org/abs/1309.0238).
+    It is loosely inspired from the SciKit API's design (cf. https://arxiv.org/abs/1309.0238).
     In particular,
         - Consistency                  : All objects share a consistent interface.
         - Inspection                   : Access to constructor and model parameters.
@@ -54,17 +60,16 @@ class Model:
         _ = (data_train, parameters)
         return self
 
-    def predict(self, x, parameters=None):
+    def predict(self, x):
         """
-        Follows SciKit's design.
-
         Naturally, any target column must not be provided to the model at this stage.
 
         Args:
             - x          : a DataFrame that represents a set of data points.
             - parameters : model related parameters for prediction.
 
-        Returns: the predictions for each data point.
+        Returns: predictions for each data point.
+        Their nature dependss on the type of model.
         """
         pass
 

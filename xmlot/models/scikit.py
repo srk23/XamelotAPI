@@ -11,6 +11,7 @@ from sklearn.ensemble       import RandomForestClassifier, AdaBoostClassifier
 
 from   sksurv.datasets      import get_x_y
 import sksurv.ensemble      as skens
+from   sksurv.functions     import StepFunction
 import sksurv.linear_model  as sklin
 
 from xmlot.models.model     import FromTheShelfModel
@@ -44,9 +45,17 @@ class ScikitClassificationModel(FromTheShelfModel):
 
         return self
 
-    def predict(self, x, parameters=None):
-        return self.model.predict_proba(x.values)
+    def predict_proba(self, x):
+        y_pred = self.model.predict_proba(x.values)
 
+        # Binary case
+        return y_pred[:, 1]
+
+        # TODO: Multiclass case; -> distinction in metric instead?
+        pass
+
+    def predict(self, x):
+        return self.predict_proba(x)
 
 class NaiveBayes(ScikitClassificationModel):
     def __init__(self, accessor_code, hyperparameters):
@@ -90,18 +99,35 @@ class AdaBoost(ScikitClassificationModel):
 
 
 class SKSurvModel(FromTheShelfModel):
-    def __init__(self, sksurv_model, accessor_code, hyperparameters=None):
+    def __init__(
+            self,
+            sksurv_model,
+            accessor_code,
+            hyperparameters=None,
+            classification_time=None
+    ):
         """
         Args:
-            - sksurv_model    : A model from SciKitLearn
-            - accessor_code   : ScikitClassificationModel are supervised models: `accessor_code` is no longer optional.
-            - hyperparameters : a dict of parameters that defines the model (e.g. neural architecture, etc.).
+            - sksurv_model       : A model from SciKitLearn;
+            - accessor_code      : tells where to find the appropiate target columns for training;
+            - hyperparameters    : a dict of parameters that defines the model (e.g. neural architecture, etc.);
+            - classification_time: when in a classification context, tells at which time the model has been intended to
+                                   predict (I don't have any better idea in terms of design...).
         """
         super().__init__(
             accessor_code   = accessor_code,
             hyperparameters = hyperparameters
         )
         self.m_model = sksurv_model(**self.hyperparameters)
+        self.m_t     = classification_time
+
+    @property
+    def classification_time(self):
+        return self.m_t
+
+    @classification_time.setter
+    def classification_time(self, t):
+        self.m_t = t
 
     def fit(self, data_train, parameters=None):
         accessor = getattr(data_train, self.accessor_code)
@@ -114,8 +140,27 @@ class SKSurvModel(FromTheShelfModel):
 
         return self
 
-    def predict(self, x, parameters=None):
-        return self.model.predict(x)
+    def predict_survival_function(self, x):
+        return self.model.predict_survival_function(x)
+
+    def predict_cif(self, x):
+        def _from_survival_function_to_cif_(f):
+            return StepFunction(
+                x=f.x,
+                y=np.array(list(map(lambda z: 1 - z, f.y))),
+                a=f.a,
+                b=f.b
+            )
+
+        survival_function = self.predict_survival_function(x)
+        return list(map(_from_survival_function_to_cif_, survival_function))
+
+    def predict_proba(self, x):
+        t = self.classification_time
+        return [1 - f(t) for f in self.predict_survival_function(x)]
+
+    def predict(self, x):
+        return self.predict_cif(x)
 
 # COX #
 
