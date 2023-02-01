@@ -59,7 +59,7 @@ class Precision(ClassificationMetric):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = list(map(lambda p: 1 if p > self.m_threshold else 0, y_pred))
 
-        return sk.precision_score(y_true, y_pred)
+        return sk.precision_score(y_true, y_pred, zero_division=0)
 
 
 class Recall(ClassificationMetric):
@@ -71,7 +71,7 @@ class Recall(ClassificationMetric):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = list(map(lambda p: 1 if p > self.m_threshold else 0, y_pred))
 
-        return sk.recall_score(y_true, y_pred)
+        return sk.recall_score(y_true, y_pred, zero_division=0)
 
 
 class F1Score(ClassificationMetric):
@@ -83,4 +83,4 @@ class F1Score(ClassificationMetric):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = list(map(lambda p: 1 if p > self.m_threshold else 0, y_pred))
 
-        return sk.f1_score(y_true, y_pred)
+        return sk.f1_score(y_true, y_pred, zero_division=0)
