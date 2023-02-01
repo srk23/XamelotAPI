@@ -50,6 +50,12 @@ class Auprc(ClassificationMetric):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         return sk.average_precision_score(y_true, y_pred)
 
+
+###############################
+#   THRESHOLD BASED METRICS   #
+###############################
+
+
 class Precision(ClassificationMetric):
     def __init__(self, accessor_code, threshold=.5):
         super().__init__(accessor_code=accessor_code)
@@ -84,3 +90,37 @@ class F1Score(ClassificationMetric):
         y_pred = list(map(lambda p: 1 if p > self.m_threshold else 0, y_pred))
 
         return sk.f1_score(y_true, y_pred, zero_division=0)
+
+class Specificity(ClassificationMetric):
+    def __init__(self, accessor_code, threshold=.5):
+        super().__init__(accessor_code=accessor_code)
+        self.m_threshold = threshold
+
+    def __call__(self, model, df_test):
+        y_pred, y_true = self._build_prediction_true_values_(model, df_test)
+        y_pred = list(map(lambda p: 1 if p > self.m_threshold else 0, y_pred))
+
+        tn, fp, fn, tp = sk.confusion_matrix(y_true, y_pred).ravel()
+
+        if tn + fp == 0:
+            return 0
+        else:
+            return tn / (tn + fp)
+
+class NegativePredictiveValue(ClassificationMetric):
+    def __init__(self, accessor_code, threshold=.5):
+        super().__init__(accessor_code=accessor_code)
+        self.m_threshold = threshold
+
+    def __call__(self, model, df_test):
+        y_pred, y_true = self._build_prediction_true_values_(model, df_test)
+        y_pred = list(map(lambda p: 1 if p > self.m_threshold else 0, y_pred))
+
+        tn, fp, fn, tp = sk.confusion_matrix(y_true, y_pred).ravel()
+
+        if tn + fn == 0:
+            return 0
+        else:
+            return tn / (tn + fn)
+
+
