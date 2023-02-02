@@ -105,7 +105,7 @@ def build_mcens(
         return unknown
 
 
-def build_msurv(s, columns=("psurv", "gsurv")):
+def build_msurv(s, psurv="psurv", gsurv="gsurv"):
     """
     Based on the patient survival time and the graft survival time,
     allow to build the corresponding competing survival time column
@@ -113,57 +113,109 @@ def build_msurv(s, columns=("psurv", "gsurv")):
 
     Args:
         - s      : a DataFrame's row (cf. pandas.apply)
-        - columns: a set of column names
+        - psurv         : column name for patient survival time;
+        - gsurv         : column name for graft survival time;
 
     Returns: the minimum of all the considered survival times for a given row.
     """
-    psurv, gsurv = columns
     if pd.notna(s[psurv]) and pd.notna(s[gsurv]):
         return min(s[psurv], s[gsurv])
     return pd.NA
 
-def build_classification_from_survival(
+def build_single_classification_from_survival(
     df,
     t,
-    accessor_code,
+    xcens,
+    xsurv,
     unknown="Unknown",
     censored="Censored"
 ):
     """
 
     Args:
-        - df            : the input DataFrame;
-        - t             : the span of time in which we want to predict the occurrence of events of interests.
-        - accessor_code : self explanatory?
-        - unknown       : value to indicate an unknown event
-        - censored      : value to indicate a censored event
+        - df       : the input DataFrame;
+        - t        : the span of time in which we want to predict the occurrence of events of interests;
+        - xcens    : column name for censoring;
+        - xsurv    : column name for survival time;
+        - unknown  : value to indicate an unknown event;
+        - censored : value to indicate a censored event.
 
     Returns: a column that provides the corresponding labels for classification.
     """
-    acc = getattr(df, accessor_code)
 
     # Initialisation
-    s = pd.DataFrame(np.nan, index=df.index, columns=df.columns)[acc.event]
+    s = pd.DataFrame(np.nan, index=df.index, columns=df.columns)[xcens]
 
     # Get Alive labels
     s = s.mask(
-        (acc.durations > t),
+        (df[xsurv] > t),
         other=0
     )
 
     # Get other labels
     i_max = -1
-    for i, event in enumerate(difference(df[acc.event].value_counts().index, [unknown, censored])):
+    for i, event in enumerate(difference(df[xcens].value_counts().index, [unknown, censored])):
         i_max = max(i_max, i+1)
-        s = s.mask(((acc.durations <= t) & (acc.events == event)), other=i+1)
+        s = s.mask(((df[xsurv] <= t) & (df[xcens] == event)), other=i + 1)
 
     # Deal with censored events
     s = s.mask(
-        ((acc.durations <= t) & (acc.events == censored)),
+        ((df[xsurv] <= t) & (df[xcens] == censored)),
         other=i_max + 1
     )
 
     return s
+
+
+def build_multi_classification_from_survival(
+        df,
+        t,
+        gcens="gcens",
+        gsurv="gsurv",
+        pcens="pcens",
+        psurv="psurv",
+        censored="Censored"
+):
+    """
+    Based on graft and patient survival, build the labels that correspond to patient states at a given time.
+    These states can be: alive with functioning graft, alive with failed graft, deceased, and censored.
+
+    Args:
+        - df       : the input DataFrame;
+        - t        : the span of time in which we want to predict the occurrence of events of interests;
+        - gcens     : column name for graft censoring;
+        - gsurv     : column name for graft survival time;
+        - pcens     : column name for patient censoring;
+        - psurv     : column name for patient survival time;
+        - unknown  : value to indicate an unknown event;
+        - censored : value to indicate a censored event.
+
+    Returns: a column that provides the corresponding labels for classification.
+    """
+    #     alive_with_functioning_graft = "Alive with functioning graft",
+    #     alive_with_failed_graft      = "Alive with failed graft",
+    #     deceased                     = "Death of recipient",
+
+    def _f_(_df_):
+
+        graft_failure = (_df_[gcens] != censored)
+        death = (_df_[pcens] != censored)
+
+        if t < _df_[psurv]:
+            if t < _df_[gsurv]:
+                return 0  # alive_with_functioning_graft
+            else:
+                if graft_failure:
+                    return 1  # alive_with_failed_graft
+                else:
+                    return 3  # censored
+        else:
+            if death:
+                return 2  # deceased
+            else:
+                return 3  # censored
+
+    return df.apply(_f_, axis=1)
 
 
 ################

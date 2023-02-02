@@ -1,5 +1,7 @@
-from xmlot.data.build         import *
-from xmlot.misc.misc import identity
+import pandas as pd
+
+from xmlot.data.build      import *
+from xmlot.misc.misc       import identity
 
 
 DF4 = pd.DataFrame(
@@ -85,6 +87,119 @@ def test_build_mcens():
 def test_build_msurv():
     s_target = pd.Series([0] * 7)
     s_obtained = DF7.apply(build_msurv, axis=1)
+
+    assert s_obtained.equals(s_target)
+
+def test_build_single_classification_from_survival():
+
+    censored = 2.
+    event    = 1.
+    alive    = 0.
+
+    s_target = pd.Series([
+        censored,
+        event,
+        alive,
+        alive,
+        censored,
+        event,
+        censored
+    ])
+    s_obtained = build_single_classification_from_survival(
+        DF7,
+        0.5,
+        xcens    = "gcens",
+        xsurv    = "gsurv",
+        unknown  = "Unknown",
+        censored = "Censored"
+    )
+
+    assert s_obtained.equals(s_target)
+
+    s_target = pd.Series([
+        censored,
+        event,
+        alive,
+        alive,
+        censored,
+        event,
+        censored
+    ])
+
+    assert s_obtained.equals(s_target)
+
+
+def test_build_multi_classification_from_survival():
+    censored                     = 3
+    deceased                     = 2
+    alive_with_failed_graft      = 1
+    alive_with_functioning_graft = 0
+
+    # TEST DF7
+    s_target = pd.Series([
+        censored,
+        alive_with_failed_graft,
+        censored,
+        deceased,
+        censored,
+        censored,
+        deceased
+    ])
+
+    s_obtained = build_multi_classification_from_survival(
+            DF7,
+            .5,
+            gcens="gcens",
+            gsurv="gsurv",
+            pcens="pcens",
+            psurv="psurv",
+            censored="Censored"
+    )
+
+    assert s_obtained.equals(s_target)
+
+    # TEST DF8
+    s_target = pd.Series([
+        censored,
+        censored,
+        deceased,
+        censored,
+        deceased
+    ])
+
+    s_obtained = build_multi_classification_from_survival(
+            DF8,
+            .5,
+            gcens="gcens",
+            gsurv="gsurv",
+            pcens="pcens",
+            psurv="psurv",
+            censored="Censored"
+    )
+
+    assert s_obtained.equals(s_target)
+
+    # TEST Alive with functioning graft (DF8 and t<0)
+    s_target = pd.Series([
+        alive_with_functioning_graft,
+        alive_with_functioning_graft,
+        alive_with_functioning_graft,
+        alive_with_functioning_graft,
+        alive_with_functioning_graft
+    ])
+
+    s_obtained = build_multi_classification_from_survival(
+            DF8,
+            -.5,
+            gcens="gcens",
+            gsurv="gsurv",
+            pcens="pcens",
+            psurv="psurv",
+            censored="Censored"
+    )
+
+    print("target  :", s_target)
+    print("obtained:", s_obtained)
 
     assert s_obtained.equals(s_target)
 
