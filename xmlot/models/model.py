@@ -24,7 +24,10 @@ class Model:
     def __init__(self, accessor_code=None, hyperparameters=None):
         """
         Args:
-            - accessor_code  : an optional accessor code to handle (training) data
+            - accessor_code  : an optional accessor code to handle training data,
+                               so that the model is autonomous in terms of data management during that stage.
+                               It's particularly important when we want to compare models that are based on different
+                               frameworks (e.g. classification vs survival analysis; see Model.fit for more details).
             - hyperparameters: a dict of parameters that defines the model (e.g. neural architecture, k for k-NN, etc.).
         """
         self.m_accessor_code   = accessor_code
@@ -48,7 +51,7 @@ class Model:
         (e.g. classification, survival analysis, etc.), the way data is used can vary. Therefore, we provide the whole
         dataset as input and let the model takes what it needs for training.
 
-        This allows to compare models that trains differently as lons as their predictions can be compared with regard
+        This allows to compare models that trains differently as long as their predictions can be compared with regard
         to the same metric.
 
         Args:
@@ -62,14 +65,15 @@ class Model:
 
     def predict(self, x):
         """
-        Naturally, any target column must not be provided to the model at this stage.
+        Returns the default output for that model (default in the sense that various types of prediction can be made).
+        Naturally, target columns must not be provided to the model at this stage.
 
         Args:
-            - x          : a DataFrame that represents a set of data points.
+            - x          : a DataFrame that represents a set of data points (features only).
             - parameters : model related parameters for prediction.
 
         Returns: predictions for each data point.
-        Their nature dependss on the type of model.
+        Their nature depends on the type of model.
         """
         pass
 

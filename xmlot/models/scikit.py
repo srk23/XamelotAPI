@@ -26,8 +26,8 @@ class ScikitClassificationModel(FromTheShelfModel):
     def __init__(self, scikit_model, accessor_code, hyperparameters=None):
         """
         Args:
-            - scikit_model    : A model from SciKitLearn
-            - accessor_code   : ScikitClassificationModel are supervised models: `accessor_code` is no longer optional.
+            - scikit_model    : A model from SciKitLearn;
+            - accessor_code   : gives access to a classification accessor;
             - hyperparameters : a dict of parameters that defines the model (e.g. neural architecture, etc.).
         """
         super().__init__(
@@ -48,11 +48,10 @@ class ScikitClassificationModel(FromTheShelfModel):
     def predict_proba(self, x):
         y_pred = self.model.predict_proba(x.values)
 
-        # Binary case
-        return y_pred[:, 1]
-
-        # TODO: Multiclass case; -> distinction in metric instead?
-        pass
+        if np.shape(y_pred)[1] == 2:  # Binary case: output is shaped as (n_samples,)
+            return y_pred[:, 1]
+        else:                             # Multi case : output is shaped as (n_samples, n_classes)
+            return y_pred
 
     def predict(self, x):
         return self.predict_proba(x)
