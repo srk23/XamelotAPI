@@ -15,7 +15,7 @@ from   sksurv.functions     import StepFunction
 import sksurv.linear_model  as sklin
 
 from xmlot.models.model     import FromTheShelfModel
-
+from xmlot.misc.misc        import set_seed
 
 ########################
 #     SCIKIT LEARN     #
@@ -37,6 +37,10 @@ class ScikitClassificationModel(FromTheShelfModel):
         self.m_model = scikit_model(**self.hyperparameters)
 
     def fit(self, data_train, parameters=None):
+        if "seed" in parameters.keys():
+            seed = parameters["seed"]
+            np.random.seed(seed)
+
         accessor = getattr(data_train, self.accessor_code)
         x_train  = accessor.features.values
         y_train  = accessor.targets.values.ravel()
@@ -46,7 +50,8 @@ class ScikitClassificationModel(FromTheShelfModel):
         return self
 
     def predict_proba(self, x):
-        y_pred = self.model.predict_proba(x.values)
+        x_     = x if type(x) == np.ndarray else x.values
+        y_pred = self.model.predict_proba(x_)
 
         if np.shape(y_pred)[1] == 2:  # Binary case: output is shaped as (n_samples,)
             return y_pred[:, 1]
@@ -129,6 +134,10 @@ class SKSurvModel(FromTheShelfModel):
         self.m_t = t
 
     def fit(self, data_train, parameters=None):
+        if "seed" in parameters.keys():
+            seed = parameters["seed"]
+            np.random.seed(seed)
+
         accessor = getattr(data_train, self.accessor_code)
         event    = accessor.event
         duration = accessor.duration
@@ -156,6 +165,7 @@ class SKSurvModel(FromTheShelfModel):
 
     def predict_proba(self, x):
         t = self.classification_time
+
         return [1 - f(t) for f in self.predict_survival_function(x)]
 
     def predict(self, x):

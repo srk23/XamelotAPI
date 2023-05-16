@@ -3,16 +3,19 @@
 import numpy  as np
 import pandas as pd
 
-from xmlot.data.build      import build_egfr,       \
-                                  build_max,        \
-                                  build_min,        \
-                                  build_easy_trend, \
-                                  build_binary_code,\
-                                  build_pcens,      \
-                                  build_psurv,      \
-                                  build_tcens,      \
-                                  build_tsurv,      \
-                                  build_mcens,      \
+from xmlot.data.build      import build_egfr,           \
+                                  build_max,            \
+                                  build_min,            \
+                                  build_easy_trend,     \
+                                  build_base_and_max,   \
+                                  build_binary_prd,     \
+                                  build_binary_graft_no,\
+                                  build_binary_code,    \
+                                  build_pcens,          \
+                                  build_psurv,          \
+                                  build_tcens,          \
+                                  build_tsurv,          \
+                                  build_mcens,          \
                                   build_msurv
 from xmlot.data.dataframes import build_empty_mask, \
                                   intersect_columns,\
@@ -173,21 +176,22 @@ def impute_bmi(df, bmi_limits, **_):
     """
     min_threshold, max_threshold = bmi_limits
 
-    for prefix in ('r', 'd'):
+    for prefix in ('r', 'd', 'rreg'):
         bmi    = prefix + "bmi"
         weight = prefix + "weight"
         height = prefix + "height"
 
-        # Imputation
-        condition = df[bmi].isna()
-        other     = compute_bmi(df[weight], df[height])
-        df[bmi]   = df[bmi].mask(condition, other)
+        if bmi in df.columns:
+            # Imputation
+            condition = df[bmi].isna()
+            other     = compute_bmi(df[weight], df[height])
+            df[bmi]   = df[bmi].mask(condition, other)
 
-        # Additional cleaning
-        condition  = (min_threshold < df[bmi]) & (df[bmi] < max_threshold)
-        df[weight] = df[weight].where(condition, pd.NA)
-        df[height] = df[height].where(condition, pd.NA)
-        df[bmi]    = df[bmi].where(condition, pd.NA)
+            # Additional cleaning
+            condition  = (min_threshold < df[bmi]) & (df[bmi] < max_threshold)
+            df[weight] = df[weight].where(condition, pd.NA)
+            df[height] = df[height].where(condition, pd.NA)
+            df[bmi]    = df[bmi].where(condition, pd.NA)
     return df
 
 
@@ -268,24 +272,25 @@ def impute_biolevels(df, **_):
 
     Returns: the updated DataFrame.
     """
-    def _columns_(key_, df_, temporal_columns_only=False):
-        columns_ = get_biolevel_columns(key_, df_, temporal_columns_only=temporal_columns_only)
-        return intersect_columns(columns_, df_)
-
-    columns_to_drop = list()
+    # def _columns_(key_, df_, temporal_columns_only=False):
+    #     columns_ = get_biolevel_columns(key_, df_, temporal_columns_only=temporal_columns_only)
+    #     return intersect_columns(columns_, df_)
+    #
+    # columns_to_drop = list()
     for key in ('alt', 'ast', 'amylase', 'creatinine', 'degfr'):
-        # Get trends
-        columns = _columns_(key, df, temporal_columns_only=True)
-        df[key + "_trend"] = build_easy_trend(df, columns)
-
-        # Get min / max levels
-        columns = _columns_(key, df, temporal_columns_only=False)
-        df[key + "_min"] = build_min(df, columns)
-        df[key + "_max"] = build_max(df, columns)
-
-        columns_to_drop += columns
-    return df.drop(columns=columns_to_drop)
-
+        df = build_base_and_max(df, prefix=key)
+    #     # Get trends
+    #     columns = _columns_(key, df, temporal_columns_only=True)
+    #     df[key + "_trend"] = build_easy_trend(df, columns)
+    #
+    #     # Get min / max levels
+    #     columns = _columns_(key, df, temporal_columns_only=False)
+    #     df[key + "_min"] = build_min(df, columns)
+    #     df[key + "_max"] = build_max(df, columns)
+    #
+    #     columns_to_drop += columns
+    # return df.drop(columns=columns_to_drop)
+    return df
 
 def replace(df, replacement_pairs, **_):
     """
@@ -297,6 +302,7 @@ def replace(df, replacement_pairs, **_):
 
     Returns: the updated DataFrame.
     """
+    replacement_pairs = [(old_col, new_col) for (old_col, new_col) in replacement_pairs if old_col in df.columns]
     for old_col, new_col in replacement_pairs:
         df = df.drop(columns=old_col) \
             .rename(columns={new_col: old_col})
@@ -327,6 +333,11 @@ def categorise(df, columns_to_categorise, **_):
         df[col] = df[col].mask(cuts[-1] <= df[key], "after {0}".format(cuts[-1]))
         columns_to_drop.append(key)
     return df.drop(columns=columns_to_drop)
+
+def adjust_prd_and_graft_no(df, **_):
+    df["prd"]      = build_binary_prd(df)
+    df["graft_no"] = build_binary_graft_no(df)
+    return df
 
 def impute_targets(df, **_):
     """
@@ -461,8 +472,9 @@ CLEANING_STEPS = (
     recompute_egfr,
     impute_biolevels,
     categorise,
+    adjust_prd_and_graft_no,
     impute_targets,
-    impute_multirisk,
+    # impute_multirisk,
     replace,
     add_unknown_category,
     remove_irrelevant_categories,

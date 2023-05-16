@@ -18,7 +18,6 @@ class Model:
                                          possibly enriched with Accessors.
         - Composition                  : A priori not checked?
         - Sensible defaults            : TODO - Provide by default a baseline for parameterisation.
-
     """
 
     def __init__(self, accessor_code=None, hyperparameters=None):
@@ -76,7 +75,6 @@ class Model:
         Their nature depends on the type of model.
         """
         pass
-
 
 class FromTheShelfModel(Model):
     """

@@ -23,13 +23,26 @@ def gandalf(msg="You shall not pass!"):
 
 
 def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    # torch.backends.cudnn.deterministic = True
-    # torch.backends.cudnn.benchmark = False
+    if seed is not None:
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        # torch.backends.cudnn.deterministic = True
+        # torch.backends.cudnn.benchmark = False
+    else:
+        return None
 
+class SeedGenerator:
+    def __init__(self, seed=None):
+        self.m_seed = seed
+        self.m_rng  = random.Random(seed)
+
+    def __call__(self):
+        if self.m_seed is not None:
+            return self.m_rng.randint(0, 1000000)
+        else:
+            return None
 
 def get_var_name(var, depth=1):
     """

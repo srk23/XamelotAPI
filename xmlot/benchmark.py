@@ -7,8 +7,7 @@ import numpy  as     np
 import pandas as     pd
 
 from xmlot.data.split       import split_dataset
-from xmlot.misc.misc        import set_seed
-
+from xmlot.misc.misc        import SeedGenerator, identity
 
 ######################
 #      VISITORS      #
@@ -37,7 +36,7 @@ class DefaultBenchmarkVisitor:
     def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
         pass
 
-    def end(self):
+    def end(self, results):
         pass
 
 
@@ -70,9 +69,9 @@ class AggregateBenchmarkVisitor(DefaultBenchmarkVisitor):
         for vis in self.m_visitors:
             vis.predict(i, model_name, best_model, df_train, scaler, sampled_df_test)
 
-    def end(self):
+    def end(self, results):
         for vis in self.m_visitors:
-            vis.end()
+            vis.end(results)
 
 
 class TalkativeBenchmarkVisitor(DefaultBenchmarkVisitor):
@@ -94,6 +93,16 @@ class TalkativeBenchmarkVisitor(DefaultBenchmarkVisitor):
         print("\t> {0}".format(model_name))
 
     def test(self, results):
+        print("\nValidation scores:")
+        for model in results.keys():
+            scores = results[model]["validation_scores"]
+            print("> {0}:\n\t> Best : {1}\n\t> Mean : {2}\n\t> Std  : {3}".format(
+                model,
+                np.max(scores),
+                np.mean(scores),
+                np.std(scores))
+            )
+
         print("\n--- TESTING ---\n")
 
     def bootstrap(self, i, k_bootstrap, sampled_df_test):
@@ -101,6 +110,73 @@ class TalkativeBenchmarkVisitor(DefaultBenchmarkVisitor):
 
     def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
         print("\t> {0}".format(model_name))
+
+    def end(self, results):
+        print("\nTest scores:")
+        for model in results.keys():
+            scores = results[model]["test_scores"]
+            print("> {0}:\n\t> Best : {1}\n\t> Mean : {2}\n\t> Std  : {3}".format(
+                model,
+                np.max(scores),
+                np.mean(scores),
+                np.std(scores))
+            )
+
+
+class DataframeBenchmarkVisitor(DefaultBenchmarkVisitor):
+    def __init__(self):
+        super().__init__()
+        self.m_train = None
+        self.m_val   = None
+        self.m_test  = dict()
+
+        self.m_train_scaler = None
+        self.m_test_scaler  = dict()
+        self.m_best_models  = dict()
+
+    @property
+    def train_data(self):
+        return self.m_train
+
+    @property
+    def val_data(self):
+        return self.m_val
+
+    @property
+    def test_data(self):
+        return self.m_test
+
+    @property
+    def train_scaler(self):
+        return self.m_train_scaler
+
+    @property
+    def test_scaler(self):
+        return self.m_test_scaler
+
+    @property
+    def best_models(self):
+        return self.m_best_models
+
+    def fold(self, i, k_fold, scaler, df_train, df_val):
+        if i == 0:
+            self.m_train_scaler = [scaler]
+            self.m_train = [df_train]
+            self.m_val   = [df_val]
+        else:
+            self.m_train_scaler.append(scaler)
+            self.m_train.append(df_train)
+            self.m_val.append(df_val)
+
+    def predict(self, i, model_name, best_model, df_train, scaler, sampled_df_test):
+        if i == 0:
+            self.m_test_scaler             = [scaler]
+            self.m_test[model_name]        = [sampled_df_test]
+            self.m_best_models[model_name] = [best_model]
+        else:
+            self.m_test_scaler.append(scaler)
+            self.m_test[model_name].append(sampled_df_test)
+            self.m_best_models[model_name].append(best_model)
 
 
 #####################
@@ -114,12 +190,13 @@ def benchmark(
         df,
         stratification_target,
         get_scaler,
-        k_fold           = 5,
-        test_frac        = .2,
-        k_bootstrap      = 10,
-        bootstrap_frac   = .5,
-        seed             = None,
-        visitor          = DefaultBenchmarkVisitor()
+        preprocessing      = identity,
+        k_fold             = 5,
+        test_frac          = .2,
+        k_bootstrap        = 10,
+        bootstrap_frac     = .5,
+        seed               = None,
+        visitor            = DefaultBenchmarkVisitor()
 ):
     """
     Args:
@@ -145,12 +222,8 @@ def benchmark(
         - test_score        : the score on test data reached by the best instance
     """
 
-    # Set seed if required
-    if seed is not None:
-        set_seed(seed)
-        random_states_split = np.random.randint(1000, size=2)
-    else:
-        random_states_split = (None, None)
+    # Set seed if required;
+    seed_generator = SeedGenerator(seed)
 
     # Initialise results
     results = {model_name: {
@@ -164,15 +237,18 @@ def benchmark(
     df_, pre_df_test = split_dataset(
         df,
         [1 - test_frac, test_frac],
-        main_target=stratification_target
+        main_target=stratification_target,
+        seed=seed_generator()
     )
+
+    df_ = preprocessing(df_)
 
     # We split the remaining part in k folds.
     splits = split_dataset(
         df_,
         [1 / k_fold] * k_fold,
         main_target=stratification_target,
-        random_states=random_states_split
+        seed=seed_generator()
     )
 
     visitor.split(splits=splits, pre_df_test=pre_df_test)
@@ -184,26 +260,35 @@ def benchmark(
 
         # We re-scale each dataset based on the information we know from the training set.
         scaler = get_scaler(pre_df_train)
+
         df_train = scaler(pre_df_train)
         df_val   = scaler(pre_df_val)
 
         visitor.fold(i, k_fold, scaler, df_train, df_val)
 
         # Let's train each model regarding those datasets.
+        # Fitting process is seeded to the fold (two same models should lead to the same results)
+        parameters_seed = seed_generator()
         for model_name in models.keys():
-
             # We take a copy of the untrained model: we train it and return the corresponding validation score.
             model = deepcopy(models[model_name]["model"])
 
-            # We perform a deepcopy of the parameters as well
-            # It is for example needed for torch's callbacks
+            # We perform a deepcopy of the parameters as well (it is for example needed for torch's callbacks)
             parameters = deepcopy(models[model_name]["parameters"])
+
             # We add validation data for the models which rely on it (cf. PyCox)
             parameters["val_data"] = df_val
+            parameters["seed"]     = parameters_seed
+
+            # Final model specific preprocessing
+            try:
+                df_train_ = parameters["preprocessing"](df_train)
+            except KeyError:
+                df_train_ = df_train
 
             # Train
             model = model.fit(
-                df_train,
+                df_train_,
                 parameters
             )
 
@@ -224,12 +309,14 @@ def benchmark(
         sampled_df_test, _ = split_dataset(
             pre_df_test.copy(),
             [bootstrap_frac, 1 - bootstrap_frac],
-            main_target=stratification_target
+            main_target=stratification_target,
+            seed=seed_generator()
         )
 
         visitor.bootstrap(i, k_bootstrap, sampled_df_test)
 
         # We compute the performance score over that sample for each model.
+        testing_seed = seed_generator()
         for model_name in models.keys():
             # We get back the best instance.
             best_i     = np.argmax(results[model_name]["validation_scores"])
@@ -237,18 +324,18 @@ def benchmark(
             df_train   = pd.concat([splits[j] for j in range(k_fold) if j != best_i])
 
             # We re-scale based on the used training dataset.
-            scaler          = get_scaler(df_train)
-            sampled_df_test = scaler(sampled_df_test)
+            scaler         = get_scaler(df_train)
+            scaled_df_test = scaler(sampled_df_test)
 
-            visitor.predict(i, model_name, best_model, df_train, scaler, sampled_df_test)
+            visitor.predict(i, model_name, best_model, df_train, scaler, scaled_df_test)
 
             # We store the result.
             results[model_name]["test_scores"].append(
                 metric(
                     best_model,
-                    sampled_df_test
+                    scaled_df_test,
+                    seed=testing_seed  # #### #
                 )
             )
-
-    visitor.end()
+    visitor.end(results)
     return results

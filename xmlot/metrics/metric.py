@@ -12,7 +12,7 @@ class Metric:
     def accessor_code(self, accessor_code):
         self.m_accessor_code = accessor_code
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         """
         Note: All additional parameters are set as attributes:
         it ensures a consistent interface while used by functions such as xmlot.benchmark.
@@ -24,3 +24,13 @@ class Metric:
         The first option seems more convenient.
         """
         pass
+
+class DummyMetric(Metric):
+    """
+    A dummy (constant) metric for debugging puposes.
+    """
+    def __init__(self):
+        super().__init__(None)
+
+    def __call__(self, model, df_test, seed=None):
+        return 0

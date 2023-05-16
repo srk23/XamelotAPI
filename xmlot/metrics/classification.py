@@ -1,11 +1,11 @@
 # Provides a suite of metrics to evaluate performances of classification models.
 
 import numpy as np
+import torch
 
 import sklearn.metrics as sk
 
 from xmlot.metrics.metric import Metric
-
 
 class ClassificationMetric(Metric):
     def __init__(self, accessor_code):
@@ -24,6 +24,9 @@ class ClassificationMetric(Metric):
         accessor = getattr(df_test, self.accessor_code)
 
         y_pred = model.predict_proba(accessor.features)
+
+        if type(y_pred) == torch.Tensor:
+            y_pred = y_pred.detach()
         y_true = accessor.targets.to_numpy().ravel()
 
         return y_pred, y_true
@@ -39,20 +42,37 @@ class Auroc(ClassificationMetric):
         self.m_multi_class = multi_class
         self.m_average     = average
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
+        # Check for binary output
+        if np.shape(y_pred)[-1] == 2:
+            y_pred = y_pred[:, 1]
+
         return sk.roc_auc_score(
             y_true, y_pred, multi_class=self.m_multi_class, average=self.m_average
         )
 
-
 class Auprc(ClassificationMetric):
-    def __init__(self, accessor_code):
+    def __init__(self, accessor_code, average=None):
         super().__init__(accessor_code=accessor_code)
+        self.m_average   = average
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
-        return sk.average_precision_score(y_true, y_pred)
+
+        n_class = np.shape(y_pred)[1]
+        scores  = list()
+
+        for c in range(n_class):
+            y_pred_c = list(map(lambda y: y[c], y_pred))
+            y_true_c = list(map(lambda y: 1 if y == c else 0, y_true))
+
+            scores.append(sk.average_precision_score(y_true_c, y_pred_c))
+
+        if self.m_average is None:
+            return scores
+        else:
+            return np.average(scores, weights=self.m_average)
 
 
 #################################
@@ -73,7 +93,7 @@ class Precision(ClassificationMetric):
         self.m_threshold = threshold
         self.m_average   = average
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = _from_proba_to_prediction_(y_pred, self.m_threshold)
 
@@ -86,7 +106,7 @@ class Recall(ClassificationMetric):
         self.m_threshold = threshold
         self.m_average   = average
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = _from_proba_to_prediction_(y_pred, self.m_threshold)
 
@@ -99,7 +119,7 @@ class F1Score(ClassificationMetric):
         self.m_threshold = threshold
         self.m_average   = average
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = _from_proba_to_prediction_(y_pred, self.m_threshold)
 
@@ -112,7 +132,7 @@ class Specificity(ClassificationMetric):
         self.m_threshold = threshold
         self.m_average   = average
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = _from_proba_to_prediction_(y_pred, self.m_threshold)
 
@@ -128,6 +148,7 @@ class Specificity(ClassificationMetric):
         if n_class == 2:  # Binary
             tn, fp, fn, tp = m.ravel()
             return _score_(tp, fp, fn, tn)
+
         else:             # Multi
             tps = list()
             tns = list()
@@ -136,8 +157,8 @@ class Specificity(ClassificationMetric):
 
             for i in range(n_class):
                 tps.append(m[i, i])
-                fps.append(np.sum(m[i, :]) - tps[-1])
-                fns.append(np.sum(m[:, i]) - tps[-1])
+                fns.append(np.sum(m[i, :]) - tps[-1])
+                fps.append(np.sum(m[:, i]) - tps[-1])
                 tns.append(np.sum(m) - tps[-1] - fps[-1] - fns[-1])
 
             if self.m_average == "macro":
@@ -149,13 +170,14 @@ class Specificity(ClassificationMetric):
                     "The option 'average' must be set to either 'micro' or 'macro' in the multiclass case."
                 )
 
+
 class NegativePredictiveValue(ClassificationMetric):
     def __init__(self, accessor_code, threshold=.5, average='binary'):
         super().__init__(accessor_code=accessor_code)
         self.m_threshold = threshold
         self.m_average   = average
 
-    def __call__(self, model, df_test):
+    def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
         y_pred = _from_proba_to_prediction_(y_pred, self.m_threshold)
 
@@ -179,8 +201,8 @@ class NegativePredictiveValue(ClassificationMetric):
 
             for i in range(n_class):
                 tps.append(m[i, i])
-                fps.append(np.sum(m[i, :]) - tps[-1])
-                fns.append(np.sum(m[:, i]) - tps[-1])
+                fns.append(np.sum(m[i, :]) - tps[-1])
+                fps.append(np.sum(m[:, i]) - tps[-1])
                 tns.append(np.sum(m) - tps[-1] - fps[-1] - fns[-1])
 
             if self.m_average == "macro":

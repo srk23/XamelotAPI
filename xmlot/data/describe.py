@@ -180,7 +180,7 @@ def print_summary(df, descriptor):
 #####################
 
 
-def plot_histogram(column, df, descriptor, bins=100):
+def plot_histogram(column, df, descriptor, bins=100,figsize=(27, 9), rotate=False):
     """
     Plot the histogram/counted categories for a given column in a specific dataset.
     """
@@ -194,7 +194,7 @@ def plot_histogram(column, df, descriptor, bins=100):
         raise KeyError
 
     # Build figure according to column's type
-    fig, ax = plt.subplots(figsize=(27, 9))
+    fig, ax = plt.subplots(figsize=figsize)
     s = df[column]
 
     # Categorical data
@@ -213,10 +213,12 @@ def plot_histogram(column, df, descriptor, bins=100):
 
         # When the text values are too long to be displayed horizontally,
         # rotate them.
-        if column in {'dcod', 'prd'}:
+        if column in {'dcod', 'prd'} or rotate:
             fig.autofmt_xdate(rotation=15)
         plt.xticks(fontsize='xx-large')
         plt.bar(x, y)
+
+        print(c)
 
     # Numerical data:
     else:
@@ -262,10 +264,7 @@ def plot_histogram(column, df, descriptor, bins=100):
 
         ax.legend(handles, labels, loc="upper right")
 
-        #plt.legend(loc="upper right")
-
     plt.show()
-
 
 def plot_densities(df, threshold=.5):
     """
