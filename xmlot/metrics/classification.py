@@ -114,16 +114,21 @@ class Recall(ClassificationMetric):
 
 
 class F1Score(ClassificationMetric):
-    def __init__(self, accessor_code, threshold=.5, average='binary'):
+    def __init__(self, accessor_code, threshold=None, average='binary'):
         super().__init__(accessor_code=accessor_code)
         self.m_threshold = threshold
         self.m_average   = average
 
     def __call__(self, model, df_test, seed=None):
         y_pred, y_true = self._build_prediction_true_values_(model, df_test)
-        y_pred = _from_proba_to_prediction_(y_pred, self.m_threshold)
 
-        return sk.f1_score(y_true, y_pred, average=self.m_average, zero_division=0)
+        if self.m_threshold is not None:
+            y_pred = _from_proba_to_prediction_(y_pred, self.m_threshold)
+            return sk.f1_score(y_true, y_pred, average=self.m_average, zero_division=0)
+        else:
+            y_preds = [_from_proba_to_prediction_(y_pred, t * .1 + .05) for t in range(10)]
+            scores  = list(map(lambda y: sk.f1_score(y_true, y, average=self.m_average, zero_division=0), y_preds))
+            return np.max(scores)
 
 
 class Specificity(ClassificationMetric):

@@ -420,14 +420,17 @@ def remove_irrelevant_columns(df, descriptor, irrelevant_columns, **_):
     Returns: the updated DataFrame.
     """
     def _is_irrelevant_(column):
-        return descriptor.get_entry(column).tags not in {"feature", "target"} \
-               or column in irrelevant_columns
+        try:
+            return descriptor.get_entry(column).tags not in {"feature", "target"} \
+                   or column in irrelevant_columns
+        except KeyError:
+            return True
 
     columns_to_drop = intersect_columns(
         [column for column in df.columns if _is_irrelevant_(column)],
         df
     )
-    return df.drop(columns=columns_to_drop)
+    return df.drop(columns=columns_to_drop, errors='ignore')
 
 
 def remove_constant_columns(df, **_):
@@ -439,7 +442,7 @@ def remove_constant_columns(df, **_):
 
     Returns: the updated DataFrame.
     """
-    return df.drop(columns=get_constant_columns(df))
+    return df.drop(columns=get_constant_columns(df), errors='ignore')
 
 
 # Reorder columns
