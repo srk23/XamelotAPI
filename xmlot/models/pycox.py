@@ -253,7 +253,10 @@ class DeepHit(PyCoxModel):
         out_features     = hyperparameters["out_features"]      # len(labtrans.cuts)
         batch_norm       = hyperparameters["batch_norm"]        # True
         dropout          = hyperparameters["dropout"]           # 0.1
+        seed             = hyperparameters["seed"]
 
+        if seed is not None:
+            torch.manual_seed(seed)
         self.m_net = CauseSpecificNet(
             in_features,
             num_nodes_shared,
@@ -277,6 +280,10 @@ class DeepHit(PyCoxModel):
         )
 
     def fit(self, data_train, parameters=None):
+
+        if parameters['seed'] is not None:
+            torch.manual_seed(parameters['seed'])
+
         x, y, = self._df_to_xy_(data_train)
 
         # Compute learning rate
@@ -293,6 +300,8 @@ class DeepHit(PyCoxModel):
             self.m_model.optimizer.set_lr(lr)
 
         # Train
+        val_data = self._df_to_xy_(parameters["val_data"])
+
         self.m_log = self.m_model.fit(
             x,
             y,
@@ -300,7 +309,7 @@ class DeepHit(PyCoxModel):
             epochs=parameters['epochs'],
             callbacks=parameters['callbacks'],
             verbose=parameters['verbose'],
-            val_data=self._df_to_xy_(parameters["val_data"]),
+            val_data=val_data,
             val_batch_size=parameters['batch_size']
         )
 

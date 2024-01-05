@@ -103,8 +103,12 @@ class NeuralModel(Model):
         _, _ = self, data_train
         return nn.CrossEntropyLoss()
 
-    def predict(self, x):
+    def predict(self, x, train=False):
         x_ = _adapt_input_(x)
+        if train:
+            self.m_net.train()
+        else:
+            self.m_net.eval()
         return self.m_net(x_.to(self.m_device))
 
     def fit(self, data_train, parameters=None):
@@ -179,7 +183,7 @@ class NeuralModel(Model):
 
                 # Compute gradients (w.r.t. our model)
                 optimizer.zero_grad()
-                y_ = self.predict(x)
+                y_ = self.predict(x, train=True)
 
                 loss = loss_function(y_, y)
                 visitor.track_loss(loss)
@@ -201,14 +205,14 @@ class NeuralModel(Model):
                         val_x = val_acc.features
                         val_y = self._get_y(val_acc.targets)
 
-                        val_y_ = self.predict(val_x).detach()
+                        val_y_ = self.predict(val_x, train=False).detach()
                         val_loss += loss_function(val_y_, val_y)
                 else:
                     val_acc = getattr(data_val, self.accessor_code)
                     val_x = val_acc.features
                     val_y = self._get_y(val_acc.targets)
 
-                    val_y_ = self.predict(val_x).detach()
+                    val_y_ = self.predict(val_x, train=False).detach()
                     val_loss = loss_function(val_y_, val_y)
 
                 visitor.track_val_loss(len(batches) * (epoch + 1), val_loss)
@@ -259,8 +263,11 @@ class NeuralNet(NeuralModel):
 
         return nn.CrossEntropyLoss(weight=weights)
 
-    def predict_proba(self, x):
-        return self.predict(x)
+    def predict_proba(self, x, train=False):
+        y = self.predict(x, train)
+        if np.shape(y)[1] == 2:
+            return y[:, 1]
+        return y
 
 
 class DeepHit(NeuralModel):
@@ -354,7 +361,7 @@ class DeepHit(NeuralModel):
 
         return _L_
 
-    def predict(self, x):
+    def predict(self, x, train=False):
         x_ = _adapt_input_(x)
         z = self.m_shared_net(x_)
 
@@ -363,8 +370,8 @@ class DeepHit(NeuralModel):
 
         return torch.stack(tuple(net(z_) for net in self.m_cause_specific_nets))
 
-    def predict_CIF(self, x):
-        y_ = self.predict(x)
+    def predict_CIF(self, x, train=False):
+        y_ = self.predict(x, train)
         return torch.cumsum(y_, dim=2)
 
     def fit(self, data_train, parameters=None):

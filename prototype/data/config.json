@@ -1,0 +1,15 @@
+{
+    "MAIN_DIR"   : "/home/engs2446/Documents/Projects/Xamelot/",
+    "DUMP_DIR"   : "/home/engs2446/Documents/Projects/Xamelot/Data/dump/",
+    "DESC_DIR"   : "/home/engs2446/Documents/Projects/Xamelot/Data/desc/",
+    "PARAMS_DIR" : "/home/engs2446/Documents/Projects/Xamelot/Data/params/",
+    "DATA_DIR"   : "/home/engs2446/Documents/Projects/Xamelot/Data/data/Data_2909/",
+    "DATA_FILES" : {
+        "offering": [
+            "Kidney Variables - Offering data.xlsx"
+        ],
+        "transplant": [
+            "Kidney variables - Transplant data.xlsx"
+        ]
+    }
+}

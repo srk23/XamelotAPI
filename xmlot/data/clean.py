@@ -4,9 +4,6 @@ import numpy  as np
 import pandas as pd
 
 from xmlot.data.build      import build_egfr,           \
-                                  build_max,            \
-                                  build_min,            \
-                                  build_easy_trend,     \
                                   build_base_and_max,   \
                                   build_binary_prd,     \
                                   build_binary_graft_no,\
@@ -100,8 +97,12 @@ def ensure_type_uniformity(df, heterogeneous_columns, **_):
     Returns: the updated DataFrame.
     """
     columns_to_retype = intersect_columns(heterogeneous_columns, df)
-    df[columns_to_retype] = df[columns_to_retype].applymap(str)
+    df[columns_to_retype] = df[columns_to_retype].map(str)
     return df
+
+
+def rename_columns(df, rename_dictionary, **_):
+    return df.rename(columns=rename_dictionary)
 
 
 def correct_unknown_values(df, generic_unknowns, specific_unknowns, **_):
@@ -137,7 +138,7 @@ def remove_abnormal_values(df, limits, **_):
     for columns, minmax_values in limits:
         min_value, max_value = minmax_values
         columns_to_crop = intersect_columns(columns, df)
-        mask[columns_to_crop] |= df[columns_to_crop] <= min_value
+        mask[columns_to_crop] |= df[columns_to_crop] < min_value
         mask[columns_to_crop] |= df[columns_to_crop] >= max_value
     return df.mask(mask)
 
@@ -160,7 +161,7 @@ def use_category_names(df, references, **_):
                 return value
 
         columns_to_remap = intersect_columns(columns, df)  # list(columns & set(clean_df.columns.to_list()))
-        df[columns_to_remap] = df[columns_to_remap].applymap(_remap_)
+        df[columns_to_remap] = df[columns_to_remap].map(_remap_)
     return df
 
 
@@ -268,6 +269,7 @@ def impute_biolevels(df, **_):
     Get trends, minimum, and maximum for biolevels.
 
     Args:
+    Args:
         - df : a DataFrame.
 
     Returns: the updated DataFrame.
@@ -334,8 +336,7 @@ def categorise(df, columns_to_categorise, **_):
         columns_to_drop.append(key)
     return df.drop(columns=columns_to_drop)
 
-def adjust_prd_and_graft_no(df, **_):
-    df["prd"]      = build_binary_prd(df)
+def binarise_graft_no(df, **_):
     df["graft_no"] = build_binary_graft_no(df)
     return df
 
@@ -421,8 +422,9 @@ def remove_irrelevant_columns(df, descriptor, irrelevant_columns, **_):
     """
     def _is_irrelevant_(column):
         try:
-            return descriptor.get_entry(column).tags not in {"feature", "target"} \
-                   or column in irrelevant_columns
+            # return descriptor.get_entry(column).tags not in {"feature", "target"} \
+            #        or column in irrelevant_columns
+            return column in irrelevant_columns
         except KeyError:
             return True
 
@@ -467,6 +469,7 @@ CLEANING_STEPS = (
     set_columns_to_lower_case,
     change_int64,
     ensure_type_uniformity,
+    rename_columns,
     correct_unknown_values,
     remove_abnormal_values,
     use_category_names,
@@ -475,7 +478,7 @@ CLEANING_STEPS = (
     recompute_egfr,
     impute_biolevels,
     categorise,
-    adjust_prd_and_graft_no,
+    binarise_graft_no,
     impute_targets,
     # impute_multirisk,
     replace,

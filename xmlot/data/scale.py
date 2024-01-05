@@ -37,12 +37,25 @@ class Scaler:
 
         assert 0 not in self.m_scales.values(), "One or more columns are constant, inducing a division by zero."
 
+    @property
+    def columns_to_transform(self):
+        return self.m_columns_to_transform
+
+    @property
+    def centers(self):
+        return self.m_centers
+
+    @property
+    def scales(self):
+        return self.m_scales
+
     def __call__(self, df):
         def _transform_(s):
-            return (s - self.m_centers[s.name]) / self.m_scales[s.name]
+            return (s - self.centers[s.name]) / self.scales[s.name]
 
         output_df = df.copy()
-        output_df[self.m_columns_to_transform] = output_df[self.m_columns_to_transform].apply(_transform_)
+
+        output_df[self.columns_to_transform] = output_df[self.columns_to_transform].apply(_transform_)
 
         return output_df
 
@@ -51,8 +64,8 @@ class Scaler:
         From a scaled DataFrame, reverts to its original form.
         """
         def _untransform_(s):
-            return (s * self.m_scales[s.name]) + self.m_centers[s.name]
+            return (s * self.scales[s.name]) + self.centers[s.name]
 
         output_df = df.copy()
-        output_df[self.m_columns_to_transform] = output_df[self.m_columns_to_transform].apply(_untransform_)
+        output_df[self.columns_to_transform] = output_df[self.columns_to_transform].apply(_untransform_)
         return output_df

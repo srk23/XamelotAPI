@@ -150,7 +150,7 @@ def build_single_classification_from_survival(
 
     # Get Alive labels
     s = s.mask(
-        (df[xsurv] > t),
+        (df[xsurv] >= t),
         other=0
     )
 
@@ -163,7 +163,7 @@ def build_single_classification_from_survival(
 
     # Deal with censored events
     s = s.mask(
-        ((df[xsurv] <= t) & (df[xcens] == censored)),
+        ((df[xsurv] < t) & (df[xcens] == censored)),
         other=i_max + 1
     )
 

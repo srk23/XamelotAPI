@@ -144,7 +144,7 @@ def get_stats(column, df, descriptor):
     # Get statistics
     if entry.is_categorical:
         stats['density'] = density(df, column)
-        stats['count']   = pd.value_counts(df[column])
+        stats['count']   = df[column].value_counts()
     else:
         stats['density'] = density(df, column)
         stats['min']     = df[column].min()
@@ -200,7 +200,7 @@ def plot_histogram(column, df, descriptor, bins=100,figsize=(27, 9), rotate=Fals
     # Categorical data
     if entry.is_categorical:
         # Display counts for each category
-        c = pd.value_counts(s)
+        c = s.value_counts()
         x = c.index
         y = c.values
 

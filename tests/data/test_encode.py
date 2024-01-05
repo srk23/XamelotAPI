@@ -4,7 +4,6 @@ import numpy  as np
 from xmlot.data.describe import Entry, Descriptor
 from xmlot.data.encode   import OneHotEncoder
 
-
 X    = np.nan
 
 DESCRIPTOR = Descriptor(
@@ -57,10 +56,19 @@ def test_encode_decode_without_nan():
 
 def test_decode_binary():
     ohe = OneHotEncoder(
-        descriptor=DESCRIPTOR
+        descriptor=DESCRIPTOR,
+        separator="#",
+        dummy=True
     )
     ohe.m_dtypes = pd.DataFrame({"col1": ["A"]}).dtypes
-    assert ohe.decode(DF3).equals(
+
+    decoded_DF3 = ohe.decode(DF3)
+
+    print("> DF3:\n", DF3)
+    print("> ohe.decode(DF3):\n", decoded_DF3)
+    print("> target:\n", pd.DataFrame({"col1": [X, X, X, X, "A", "B", "A", "B"]}))
+
+    assert decoded_DF3.equals(
         pd.DataFrame({"col1": [X, X, X, X, "A", "B", "A", "B"]})
     )
 
@@ -68,19 +76,19 @@ def test_encode_decode_dummy():
     # Without dummy column
     ohe = OneHotEncoder(descriptor=DESCRIPTOR)
     encoded = ohe.encode(DF4, with_dummy_columns=False)
+
     assert encoded.equals(pd.DataFrame({
         "col2#1.0": [X, 0., 1., 0.],
         "col2#2.0": [X, 0., 0., 1.]
     }).astype('float32'))
 
     decoded = ohe.decode(encoded)
+
     assert decoded.equals(DF4)
 
     # With dummy column
     ohe = OneHotEncoder(descriptor=DESCRIPTOR)
     encoded = ohe.encode(DF4, with_dummy_columns=True)
-
-    print(pd.concat([DF4, encoded], axis=1))
 
     assert encoded.equals(pd.DataFrame({
         "col2#0.0": [X, 1., 0., 0.],
@@ -88,30 +96,11 @@ def test_encode_decode_dummy():
         "col2#2.0": [X, 0., 0., 1.]
     }).astype('float32'))
 
-    decoded = ohe.decode(encoded)
-    assert decoded.equals(DF4)
+    print("\n#########\n")
 
-# 1)
-#
-# x   = np.nan
-# df  = pd.DataFrame({"rsex#Male":[x, 1, x, 0, x, 0, 0, 1, 1], "rsex#Female": [x, x, 1, x, 0, 0, 1, 0, 1]})
-#
-# ohe = OneHotEncoder(
-#     descriptor=DESCRIPTOR
-# )
-# ohe.m_dtypes = DATAFRAME[["rsex"]].dtypes
-# pd.concat([df, ohe.decode(df)], axis=1)
-#
-#
-# 2)
-#
-# x   = np.nan
-# df  = pd.DataFrame({"alt_trend": [x, 0, 1, -1]})
-#
-# ohe = OneHotEncoder(
-#     descriptor=DESCRIPTOR
-# )
-#
-# encoded = ohe.encode(df, with_dummy_columns=False)
-# decoded = ohe.decode(encoded)
-# pd.concat([df, decoded, encoded], axis=1)
+    decoded = ohe.decode(encoded)
+
+    print("decoded:\n", decoded)
+    print("DF4\n:", DF4)
+
+    assert decoded.equals(DF4)

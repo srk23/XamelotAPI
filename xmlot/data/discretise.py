@@ -70,14 +70,38 @@ class Discretiser:
             else:
                 return i_max
 
+        def _censor_late_events_(s, e, d):
+            """
+            Events that occur after the last grid point are considered as censored by default.
+            """
+            if s[e] != 0 and s[d] > self.grid[-1]:
+                return 0
+            else:
+                return s[e]
+
+        # CALL:
         df_ = df.copy()
 
         event, duration = getattr(df, self.m_accessor_code).target
+
+        # Each point in the grid can be seen as an observation point:
+        # We first need to ensure that events that are censored before the first observation are removed.
+        mask = (df_[event] == 0) & (df_[duration] < self.grid[0])
+        df_ = df_.drop(df_[mask].index)
+
+        # Then, if an event occurs after the last observation:
+        # it will never be observed and therefore can be considered as censored.
+        df_[getattr(df_, self.m_accessor_code).event] = df_.apply(
+            lambda s: _censor_late_events_(s, e=event, d=duration), axis=1
+        )
+
+        # Finally, we can map the other events on the grid.
         df_[getattr(df_, self.m_accessor_code).duration] = df_.apply(
             lambda s: _get_position_on_grid_(s, e=event, d=duration), axis=1
         )
 
-        return df_
+        return df_.astype({event: 'int64', duration: 'int64'})
+
 
 class DefaultDiscretiser(Discretiser):
     """

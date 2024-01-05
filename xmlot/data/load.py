@@ -1,7 +1,7 @@
 # Allow to save and load various kind of data: datasets, parameters, descriptors, etc.
 
 import json
-import pickle
+import dill as pickle
 import re
 
 import pandas as pd
@@ -187,7 +187,9 @@ def load_cleaning_parameters(config: Configurator, json_name):
         "irrelevant_categories" : parameters["IRRELEVANT_CATEGORIES"],
         "irrelevant_columns"    : parameters["IRRELEVANT_COLUMNS"],
         "columns_with_unknowns" : parameters["COLUMNS_WITH_UNKNOWNS"],
-        "unknown"               : parameters["UNKNOWN"]
+        "unknown"               : parameters["UNKNOWN"],
+        "column_pairs"          : parameters["COL_PAIRS"],
+        "rename_dictionary"     : parameters["RENAME"],
     }
 
     # Since JSON does not handle int as keys, we need to do it "by hand".

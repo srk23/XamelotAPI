@@ -3,6 +3,7 @@
 import json
 import os
 
+from collections import defaultdict
 
 class Configurator:
     def __init__(self,
@@ -95,7 +96,7 @@ def json_config(json_filename):
         }```
     """
     with open(json_filename) as config_json:
-        config = json.load(config_json)
+        config = defaultdict(lambda: None, json.load(config_json))
 
     return Configurator(
         data_dir      = config["DATA_DIR"],

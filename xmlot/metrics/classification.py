@@ -26,7 +26,7 @@ class ClassificationMetric(Metric):
         y_pred = model.predict_proba(accessor.features)
 
         if type(y_pred) == torch.Tensor:
-            y_pred = y_pred.detach()
+            y_pred = y_pred.detach().cpu()
         y_true = accessor.targets.to_numpy().ravel()
 
         return y_pred, y_true
@@ -84,6 +84,8 @@ def _from_proba_to_prediction_(y_pred, threshold):
     if len(np.shape(y_pred)) == 1:
         return list(map(lambda p: 1 if p > threshold else 0, y_pred))
     else:
+        if np.shape(y_pred)[1] == 2:
+            print("WARNING: Model has been detected as multi output but may be binary instead.")
         return list(map(lambda p: np.argmax(p), y_pred))
 
 

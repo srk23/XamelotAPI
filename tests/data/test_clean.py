@@ -324,7 +324,10 @@ def test_remove_irrelevant_columns():
         'dheight': [1.0, 100.0, 200.0],
     })
 
-    cleaning_parameters = {"descriptor" : DESCRIPTOR2, "irrelevant_columns" : ['dbmi']}
+    cleaning_parameters = {
+        "descriptor" : DESCRIPTOR2,
+        "irrelevant_columns" : ['irrelevant', 'dbmi']
+    }
     output_df = remove_irrelevant_columns(input_df, **cleaning_parameters)
 
     assert target_df.equals(output_df)

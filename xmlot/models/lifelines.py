@@ -51,6 +51,11 @@ class LifelinesCoxModel(FromTheShelfModel):
         event    = accessor.event
         duration = accessor.duration
 
+        unwanted_keys = ["val_data", "seed"]
+        for key in unwanted_keys:
+            if key in parameters.keys():
+                parameters.pop(key, None)
+
         self.m_model = self.model.fit(
             data_train,
             duration,

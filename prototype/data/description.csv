@@ -1,0 +1,219 @@
+variable,description,type,is_categorical,categorical_keys,files,tags
+arecip_id,Anonymised ODT recipient identification number,Int64,FALSE,,"transplant, offering",id
+adonor_id,Anonymised donor identification number,Int64,FALSE,,"transplant, offering",id
+rhosp,Anonymised unit that received and transplanted the organ,object,TRUE,,"transplant, offering",feature
+rsex,Recipient sex,object,TRUE,Male:Female,"transplant, offering",feature
+rage,Recipient age,Int64,FALSE,,"transplant, offering",feature
+rbg,Recipient blood group,object,TRUE,,"transplant, offering",feature
+rweight,Recipient weight at transplantation (kg),float32,FALSE,,"transplant, offering",feature
+rheight,Recipient height at transplantation (cm),float32,FALSE,,"transplant, offering",feature
+rbmi,Recipient BMI,float32,FALSE,,"transplant, offering",feature
+rethnic,Recipient ethnicity,object,TRUE,,"transplant, offering",feature
+prd,Primary renal disease,object,TRUE,,"transplant, offering",feature
+diab,Was the recipient diabetic,object,TRUE,No:Yes,"transplant, offering",feature
+wait_time,Recipient waiting time (days),Int64,FALSE,,"transplant, offering",feature
+offer_wait,"Recipient waiting time (days), from registration to offer",Int64,FALSE,,offering,feature
+rcmv,Recipient CMV test result,object,TRUE,Negative:Positive,"transplant, offering",feature
+rhcv,Recipient HCV status,object,TRUE,Negative:Positive,"transplant, offering",feature
+rhbv,Recipient HBV status,object,TRUE,Negative:Positive,"transplant, offering",feature
+rhiv,Recipient HIV status,object,TRUE,Negative:Positive,"transplant, offering",feature
+dial_at_reg,Dialysis status at registration,object,TRUE,,"transplant, offering",feature
+dial_at_tx,On dialysis prior to transplant,object,TRUE,No:Yes,"transplant, offering",feature
+dial_at_tx_type,Status of dialysis prior to transplant type,object,TRUE,,"transplant, offering",feature
+days_on_dial_tx,Days between transplant date and dialysis start date,Int64,FALSE,,"transplant, offering",feature
+graft_no,Number of kidney transplants,object,TRUE,First graft:Second graft or more,"transplant, offering",feature
+crf_tx,Calculated reaction frequency at transplant,float32,FALSE,,"transplant, offering",feature
+dtype,Type of donor,object,TRUE,DBD:DCD,"transplant, offering",feature
+dage,Donor age,Int64,FALSE,,"transplant, offering",feature
+r_a_hom,Recipient homozygous at A locus,object,TRUE,Heterozygous:Homozygous,"transplant, offering",feature
+r_b_hom,Recipient homozygous at B locus,object,TRUE,Heterozygous:Homozygous,"transplant, offering",feature
+r_dr_hom,Recipient homozygous at DR locus,object,TRUE,Heterozygous:Homozygous,"transplant, offering",feature
+hla_grp,HLA mismatch groups,object,TRUE,,"transplant, offering",feature
+matchbty,Matchability,float32,FALSE,,"transplant, offering",feature
+matchpts,Matchability (rectified score between 0 and 10),float32,FALSE,,"transplant, offering",feature
+a_12,Azathioprine immunosuppression at one year follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+c_12,Ciclosporin immunosuppression at one year follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+m_12,Mycophenolate immunosuppression at one year follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+o_12,Other immunosuppression at one year follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+p_12,Predniscolone / predniscone immunosuppression at one year follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+t_12,Tacrolimus immunosuppression at one year follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+a_60,Azathioprine immunosuppression at five years follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+c_60,Ciclosporin immunosuppression at five years follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+m_60,Mycophenolate immunosuppression at five years follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+o_60,Other immunosuppression at five years follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+p_60,Predniscolone / predniscone immunosuppression at five years follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+t_60,Tacrolimus immunosuppression at five years follow up,object,TRUE,No:Yes,"transplant, offering",irrelevant
+tsurv,Transplant survival time (days),float32,FALSE,,"transplant, offering",target
+tcens,Transplant censoring indicator,object,TRUE,Censored:Graft failure or death,"transplant, offering",target
+tclass,Classification labels for any event (graft failure or death),float32,TRUE,Alive:Graft failure or death,new,target
+gsurv,Graft survival time (days),float32,FALSE,,"transplant, offering",target
+gcens,Graft censoring indicator,object,TRUE,Censored:Graft failure,"transplant, offering",target
+gclass,Classification labels for graft survival,float32,TRUE,Alive:Graft failure,new,target
+psurv,Patient survival time (days),float32,FALSE,,"transplant, offering",target
+pcens,Patient censoring indicator,object,TRUE,Censored:Death of recipient,"transplant, offering",target
+pclass,Classification labels for patient survival,float32,TRUE,Alive:Death of recipient,new,target
+rdeath,Patient censoring indicator,object,TRUE,Censored:Death of recipient,"transplant, offering",target
+msurv,Multirisk survival time (days),float32,FALSE,,new,target
+mcens,Multirisk censoring indicator,object,TRUE,Censored:Graft failure:Deceased,new,target
+mclass,Multiclass labels,object,TRUE,,new,target
+atx_id,Anonymised transplant identification number,Int64,FALSE,,transplant,id
+tx_yr,Year of transplant,Int64,FALSE,,transplant,feature
+cat_tx_yr,Categorised year of transplant,object,TRUE,,new,feature
+tx_type,Type of transplant,object,TRUE,,transplant,feature
+dsex,Donor sex,object,TRUE,Male:Female,transplant,feature
+dbg,Donor blood group,object,TRUE,,transplant,feature
+dheight,Donor height (cm),float32,FALSE,,transplant,feature
+dweight,Donor weight (kg),float32,FALSE,,transplant,feature
+dbmi,Donor BMI,float32,FALSE,,transplant,feature
+dethnic,Donor ethnicity,object,TRUE,,transplant,feature
+dcod,Donor cause of death,object,TRUE,,transplant,feature
+durine_output_24hrs,Donor urine output within the last 24 hours (ml),float32,FALSE,,transplant,feature
+dret_creat,Donor creatinine at retrieval ,float32,FALSE,,transplant,feature
+dcmv,Donor CMV test result,object,TRUE,Negative:Positive,transplant,feature
+dhbsag,Donor HBS AG test result,object,TRUE,Negative:Positive,transplant,feature
+dhbcab,Donor HBCAB test result,object,TRUE,Negative:Positive,transplant,feature
+dhcv,Donor HCV test result,object,TRUE,Negative:Positive,transplant,feature
+dhiv,Donor HIV test result,object,TRUE,Negative:Positive,transplant,feature
+debv,Donor EBV test result,object,TRUE,Negative:Positive,transplant,feature
+dhtlv,Donor HTLV test result,object,TRUE,Negative:Positive,transplant,feature
+dpast_alcohol_abuse,Donor history of alcohol abuse,object,TRUE,No:Yes,transplant,feature
+dpast_cardio_disease,Donor cardio disease,object,TRUE,No:Yes,transplant,feature
+dpast_diabetes,Donor diabetes,object,TRUE,No:Yes,transplant,feature
+dpast_drug_abuse,Donor history of drug abuse,object,TRUE,No:Yes,transplant,feature
+dpast_hypertension,Donor hypertension,object,TRUE,No:Yes,transplant,feature
+dpast_liver_disease,Donor liver disease,object,TRUE,No:Yes,transplant,feature
+dpast_smoker,Donor smoker,object,TRUE,No:Yes,transplant,feature
+dpast_smoker_amount,Donor smoker amount,Int64,FALSE,,transplant,feature
+dpast_tumour,Donor tumour,object,TRUE,No:Yes,transplant,feature
+dpast_uti,Donor UTI,object,TRUE,No:Yes,transplant,feature
+d_a_hom,Donor homozygous at A locus,object,TRUE,Heterozygous:Homozygous,transplant,feature
+d_b_hom,Donor homozygous at B locus,object,TRUE,Heterozygous:Homozygous,transplant,feature
+d_dr_hom,Donor homozygous at DR locus,object,TRUE,Heterozygous:Homozygous,transplant,feature
+amm,Number of mismatches at A locus,Int64,FALSE,,transplant,feature
+bmm,Number of mismatches at B locus,Int64,FALSE,,transplant,feature
+drmm,Number of mismatches at DR locus,Int64,FALSE,,transplant,feature
+mgrade,Matchgrade,object,TRUE,,transplant,feature
+aitx_type,Type of antibody incompatible transplant ,object,TRUE,,transplant,feature
+aitx_grp,Group of antibody incompatible transplant,object,TRUE,,transplant,feature
+degfr,Donor EGFR at retrieval,float32,FALSE,,transplant,feature
+alt_11,Donor ALT readings - on admission,float32,FALSE,,transplant,feature
+alt_12,Donor ALT readings - on admission,float32,FALSE,,transplant,feature
+alt_31,Donor ALT readings - on referral to SN-OD,float32,FALSE,,transplant,feature
+alt_32,Donor ALT readings - on referral to SN-OD,float32,FALSE,,transplant,feature
+alt_61,Donor ALT readings - on retrieval,float32,FALSE,,transplant,feature
+alt_62,Donor ALT readings - on retrieval,float32,FALSE,,transplant,feature
+alt_71,Donor ALT readings - additional result,float32,FALSE,,transplant,feature
+alt_72,Donor ALT readings - additional result,float32,FALSE,,transplant,feature
+alt_73,Donor ALT readings - additional result,float32,FALSE,,transplant,feature
+alt_74,Donor ALT readings - additional result,float32,FALSE,,transplant,feature
+alt_75,Donor ALT readings - additional result,float32,FALSE,,transplant,feature
+alt_81,Donor ALT readings - result stage not reported,float32,FALSE,,transplant,feature
+alt_82,Donor ALT readings - result stage not reported,float32,FALSE,,transplant,feature
+alt_83,Donor ALT readings - result stage not reported,float32,FALSE,,transplant,feature
+alt_84,Donor ALT readings - result stage not reported,float32,FALSE,,transplant,feature
+alt_85,Donor ALT readings - result stage not reported,float32,FALSE,,transplant,feature
+ast_11,Donor AST readings - on admission,float32,FALSE,,transplant,feature
+ast_12,Donor AST readings - on admission,float32,FALSE,,transplant,feature
+ast_31,Donor AST readings - on referral to SN-OD,float32,FALSE,,transplant,feature
+ast_32,Donor AST readings - on referral to SN-OD,float32,FALSE,,transplant,feature
+ast_61,Donor AST readings - on retrieval,float32,FALSE,,transplant,feature
+ast_62,Donor AST readings - on retrieval,float32,FALSE,,transplant,feature
+ast_71,Donor AST readings - additional result,float32,FALSE,,transplant,feature
+ast_72,Donor AST readings - additional result,float32,FALSE,,transplant,feature
+ast_73,Donor AST readings - additional result,float32,FALSE,,transplant,feature
+ast_74,Donor AST readings - additional result,float32,FALSE,,transplant,feature
+ast_75,Donor AST readings - additional result,float32,FALSE,,transplant,feature
+ast_81,Donor AST readings - result stage not reported,float32,FALSE,,transplant,feature
+ast_82,Donor AST readings - result stage not reported,float32,FALSE,,transplant,feature
+ast_83,Donor AST readings - result stage not reported,float32,FALSE,,transplant,feature
+ast_84,Donor AST readings - result stage not reported,float32,FALSE,,transplant,feature
+ast_85,Donor AST readings - result stage not reported,float32,FALSE,,transplant,feature
+amylase_11,Donor Amylase readings - on admission,float32,FALSE,,transplant,feature
+amylase_12,Donor Amylase readings - on admission,float32,FALSE,,transplant,feature
+amylase_31,Donor Amylase readings - on referral to SN-OD,float32,FALSE,,transplant,feature
+amylase_32,Donor Amylase readings - on referral to SN-OD,float32,FALSE,,transplant,feature
+amylase_61,Donor Amylase readings - on retrieval,float32,FALSE,,transplant,feature
+amylase_62,Donor Amylase readings - on retrieval,float32,FALSE,,transplant,feature
+amylase_71,Donor Amylase readings - additional result,float32,FALSE,,transplant,feature
+amylase_72,Donor Amylase readings - additional result,float32,FALSE,,transplant,feature
+amylase_73,Donor Amylase readings - additional result,float32,FALSE,,transplant,feature
+amylase_74,Donor Amylase readings - additional result,float32,FALSE,,transplant,feature
+amylase_75,Donor Amylase readings - additional result,float32,FALSE,,transplant,feature
+amylase_81,Donor Amylase readings - result stage not reported,float32,FALSE,,transplant,feature
+amylase_82,Donor Amylase readings - result stage not reported,float32,FALSE,,transplant,feature
+amylase_83,Donor Amylase readings - result stage not reported,float32,FALSE,,transplant,feature
+amylase_84,Donor Amylase readings - result stage not reported,float32,FALSE,,transplant,feature
+amylase_85,Donor Amylase readings - result stage not reported,float32,FALSE,,transplant,feature
+creatinine_11,Donor Creatinine readings - on admission,float32,FALSE,,transplant,feature
+creatinine_31,Donor Creatinine readings - on referral to SN-OD,float32,FALSE,,transplant,feature
+creatinine_61,Donor Creatinine readings - on retrieval,float32,FALSE,,transplant,feature
+creatinine_62,Donor Creatinine readings - on retrieval,float32,FALSE,,transplant,feature
+creatinine_63,Donor Creatinine readings - on retrieval,float32,FALSE,,transplant,feature
+creatinine_71,Donor Creatinine readings - additional result,float32,FALSE,,transplant,feature
+creatinine_72,Donor Creatinine readings - additional result,float32,FALSE,,transplant,feature
+creatinine_73,Donor Creatinine readings - additional result,float32,FALSE,,transplant,feature
+creatinine_74,Donor Creatinine readings - additional result,float32,FALSE,,transplant,feature
+creatinine_75,Donor Creatinine readings - additional result,float32,FALSE,,transplant,feature
+creatinine_81,Donor Creatinine readings - result stage not reported,float32,FALSE,,transplant,feature
+creatinine_82,Donor Creatinine readings - result stage not reported,float32,FALSE,,transplant,feature
+creatinine_83,Donor Creatinine readings - result stage not reported,float32,FALSE,,transplant,feature
+creatinine_84,Donor Creatinine readings - result stage not reported,float32,FALSE,,transplant,feature
+degfr_11,Donor eGFR - on admission,float32,FALSE,,transplant,feature
+degfr_31,Donor eGFR - on referral to SN-OD,float32,FALSE,,transplant,feature
+degfr_61,Donor eGFR - on retrieval,float32,FALSE,,transplant,feature
+degfr_62,Donor eGFR - on retrieval,float32,FALSE,,transplant,feature
+degfr_63,Donor eGFR - on retrieval,float32,FALSE,,transplant,feature
+degfr_71,Donor eGFR - additional result,float32,FALSE,,transplant,feature
+degfr_72,Donor eGFR - additional result,float32,FALSE,,transplant,feature
+degfr_73,Donor eGFR - additional result,float32,FALSE,,transplant,feature
+degfr_74,Donor eGFR - additional result,float32,FALSE,,transplant,feature
+degfr_75,Donor eGFR - additional result,float32,FALSE,,transplant,feature
+degfr_81,Donor eGFR - result stage not reported,float32,FALSE,,transplant,feature
+degfr_82,Donor eGFR - result stage not reported,float32,FALSE,,transplant,feature
+degfr_83,Donor eGFR - result stage not reported,float32,FALSE,,transplant,feature
+degfr_84,Donor eGFR - result stage not reported,float32,FALSE,,transplant,feature
+off_monyy,Month and year of offering date,date,FALSE,,offering,feature
+reason1,Primary reason for offer refusal ,object,TRUE,,offering,???
+reason2,Secondary reason for offer refusal ,object,TRUE,,offering,???
+status,Organ status,object,TRUE,,offering,???
+timeoff_tx,Time from offer to first outcome (transplant) in days,Int64,FALSE,,offering,feature
+timeoff_rem,Time from offer to first outcome (removal) in days,Int64,FALSE,,offering,feature
+timeoff_death,Time from offer to first outcome (death) in days,Int64,FALSE,,offering,feature
+rregcmv,Recipient CMV test result at registration,object,TRUE,Negative:Positive,offering,feature
+rreghcv,Recipient HCV status at registration,object,TRUE,Negative:Positive,offering,feature
+rreghbv,Recipient HBV status at registration,object,TRUE,Negative:Positive,offering,feature
+rreghiv,Recipient HIV status at registration,object,TRUE,Negative:Positive,offering,feature
+rregdial_at_reg,Status of dialysis at registration to date,object,TRUE,,offering,feature
+rregweight,Recipient weight at registration (kg),float32,FALSE,,offering,feature
+rregheight,Recipient height at registration (cm),float32,FALSE,,offering,feature
+rregprd,Primary renal disease at registration,object,TRUE,,offering,feature
+rregmatchbty,Matchability,float32,FALSE,,offering,feature
+rregmatchpts,Matchability (rectified score between 0 and 10),float32,FALSE,,"transplant, offering",feature
+rreg_a_hom,Recipient homozygous at A locus at registration,object,TRUE,,offering,feature
+rreg_b_hom,Recipient homozygous at B locus at registration,object,TRUE,,offering,feature
+rreg_dr_hom,Recipient homozygous at DR locus at registration,object,TRUE,,offering,feature
+rregbmi,Recipient BMI at registration,float32,FALSE,,offering,feature
+rhosp_offer,Anonymous unit that received the named patient offer,object,TRUE,,offering,feature
+off_cent,Unknown!,object,TRUE,,offering,???
+alt_trend,Trend for alt.,object,TRUE,,new,feature
+alt_min,Minimum value for alt.,float32,FALSE,,new,feature
+alt_max,Maximum value for alt.,float32,FALSE,,new,feature
+ast_trend,Trend for ast.,object,TRUE,,new,feature
+ast_min,Minimum value for ast.,float32,FALSE,,new,feature
+ast_max,Maximum value for ast.,float32,FALSE,,new,feature
+amylase_trend,Trend for amylase.,object,TRUE,,new,feature
+amylase_min,Minimum value for amylase.,float32,FALSE,,new,feature
+amylase_max,Maximum value for amylase.,float32,FALSE,,new,feature
+creatinine_trend,Trend for creatinine.,object,TRUE,,new,feature
+creatinine_min,Minimum value for creatinine.,float32,FALSE,,new,feature
+creatinine_max,Maximum value for creatinine.,float32,FALSE,,new,feature
+degfr_trend,Trend for degfr.,object,TRUE,,new,feature
+degfr_min,Minimum value for degfr.,float32,FALSE,,new,feature
+degfr_max,Maximum value for degfr.,float32,FALSE,,new,feature
+degfr_base,Donor eGFR – first measure,float32,FALSE,,new,feature
+dial_type,Tells the most recent type of dialysis regarding transplantation.,object,TRUE,,new,feature
+dial_days,Tells how long the patient have been on dialysis.,float32,FALSE,,new,feature
+random,Dummy random column for feature selection.,float32,FALSE,,new,feature
+dsurv,Denied outcome survival time (days),float32,FALSE,,new,target
+dcens,Denied Outcome censoring indicator,object,TRUE,Censored:Transplant:Removal:Death,new,target
+matching_policy,Matching policy,object,TRUE,,new,target

@@ -75,7 +75,6 @@ def encode_categorical_data(
     )
     return ohe.encode(df), ohe
 
-
 ######################
 #      VISITORS      #
 ######################
@@ -196,8 +195,8 @@ def embed_data(
     df = select_targets(df, targets_to_focus, descriptor)
     visitor.select_targets(df, targets_to_focus, descriptor)
 
-    df = extract_dense_dataframe(df, threshold)
-    visitor.extract_dense_dataframe(df, threshold)
+    # df = extract_dense_dataframe(df, threshold)
+    # visitor.extract_dense_dataframe(df, threshold)
 
     df, ohe = encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
     visitor.encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
