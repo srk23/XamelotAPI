@@ -68,11 +68,12 @@ def encode_categorical_data(
         A one-hot encoded DataFrame, the One Hot Encoder.
     """
     ohe = OneHotEncoder(
-        descriptor,
-        separator,
-        exceptions,
-        default_categories
+        descriptor=descriptor,
+        separator=separator,
+        exceptions=exceptions,
+        default_categories=default_categories
     )
+
     return ohe.encode(df), ohe
 
 ######################
@@ -197,7 +198,6 @@ def embed_data(
 
     # df = extract_dense_dataframe(df, threshold)
     # visitor.extract_dense_dataframe(df, threshold)
-
     df, ohe = encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
     visitor.encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
 

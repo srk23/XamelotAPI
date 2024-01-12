@@ -41,6 +41,7 @@ DF3  = pd.DataFrame({
 DF4 = pd.DataFrame({"col2": [X, 0, 1, 2]})
 
 
+
 def test_encode_decode_without_nan():
     original_df = DF1
 
@@ -104,3 +105,14 @@ def test_encode_decode_dummy():
     print("DF4\n:", DF4)
 
     assert decoded.equals(DF4)
+
+def test_default_categories():
+    # Without default
+    ohe = OneHotEncoder(descriptor=DESCRIPTOR)
+
+    assert (ohe.encode(DF4).columns == ["col2#1.0", "col2#2.0"]).all()
+
+    # With default
+    ohe = OneHotEncoder(descriptor=DESCRIPTOR, default_categories={"col2": "1.0"})
+
+    assert (ohe.encode(DF4).columns == ["col2#0.0", "col2#2.0"]).all()
