@@ -1,7 +1,7 @@
 variable,description,type,is_categorical,categorical_keys,files,tags
 arecip_id,Anonymised ODT recipient identification number,Int64,FALSE,,"transplant, offering",id
 adonor_id,Anonymised donor identification number,Int64,FALSE,,"transplant, offering",id
-rhosp,Anonymised unit that received and transplanted the organ,object,TRUE,,"transplant, offering",feature
+rhosp,Hospital,object,TRUE,,"transplant, offering",feature
 rsex,Recipient sex,object,TRUE,Male:Female,"transplant, offering",feature
 rage,Recipient age,Int64,FALSE,,"transplant, offering",feature
 rbg,Recipient blood group,object,TRUE,,"transplant, offering",feature
@@ -12,7 +12,7 @@ rethnic,Recipient ethnicity,object,TRUE,,"transplant, offering",feature
 prd,Primary renal disease,object,TRUE,,"transplant, offering",feature
 diab,Was the recipient diabetic,object,TRUE,No:Yes,"transplant, offering",feature
 wait_time,Recipient waiting time (days),Int64,FALSE,,"transplant, offering",feature
-offer_wait,"Recipient waiting time (days), from registration to offer",Int64,FALSE,,offering,feature
+offer_wait,Waiting time (days),Int64,FALSE,,offering,feature
 rcmv,Recipient CMV test result,object,TRUE,Negative:Positive,"transplant, offering",feature
 rhcv,Recipient HCV status,object,TRUE,Negative:Positive,"transplant, offering",feature
 rhbv,Recipient HBV status,object,TRUE,Negative:Positive,"transplant, offering",feature
@@ -21,7 +21,7 @@ dial_at_reg,Dialysis status at registration,object,TRUE,,"transplant, offering",
 dial_at_tx,On dialysis prior to transplant,object,TRUE,No:Yes,"transplant, offering",feature
 dial_at_tx_type,Status of dialysis prior to transplant type,object,TRUE,,"transplant, offering",feature
 days_on_dial_tx,Days between transplant date and dialysis start date,Int64,FALSE,,"transplant, offering",feature
-graft_no,Number of kidney transplants,object,TRUE,First graft:Second graft or more,"transplant, offering",feature
+graft_no,Nb. of kidney transplants,object,TRUE,1st graft:2nd graft or +,"transplant, offering",feature
 crf_tx,Calculated reaction frequency at transplant,float32,FALSE,,"transplant, offering",feature
 dtype,Type of donor,object,TRUE,DBD:DCD,"transplant, offering",feature
 dage,Donor age,Int64,FALSE,,"transplant, offering",feature
@@ -89,9 +89,9 @@ dpast_uti,Donor UTI,object,TRUE,No:Yes,transplant,feature
 d_a_hom,Donor homozygous at A locus,object,TRUE,Heterozygous:Homozygous,transplant,feature
 d_b_hom,Donor homozygous at B locus,object,TRUE,Heterozygous:Homozygous,transplant,feature
 d_dr_hom,Donor homozygous at DR locus,object,TRUE,Heterozygous:Homozygous,transplant,feature
-amm,Number of mismatches at A locus,Int64,FALSE,,transplant,feature
-bmm,Number of mismatches at B locus,Int64,FALSE,,transplant,feature
-drmm,Number of mismatches at DR locus,Int64,FALSE,,transplant,feature
+amm,Nb. of mismatches at A locus,Int64,FALSE,,transplant,feature
+bmm,Nb. of mismatches at B locus,Int64,FALSE,,transplant,feature
+drmm,Nb. of mismatches at DR locus,Int64,FALSE,,transplant,feature
 mgrade,Matchgrade,object,TRUE,,transplant,feature
 aitx_type,Type of antibody incompatible transplant ,object,TRUE,,transplant,feature
 aitx_grp,Group of antibody incompatible transplant,object,TRUE,,transplant,feature
@@ -193,27 +193,31 @@ rreg_a_hom,Recipient homozygous at A locus at registration,object,TRUE,,offering
 rreg_b_hom,Recipient homozygous at B locus at registration,object,TRUE,,offering,feature
 rreg_dr_hom,Recipient homozygous at DR locus at registration,object,TRUE,,offering,feature
 rregbmi,Recipient BMI at registration,float32,FALSE,,offering,feature
-rhosp_offer,Anonymous unit that received the named patient offer,object,TRUE,,offering,feature
+rhosp_offer,Hospital (offer),object,TRUE,,offering,feature
 off_cent,Unknown!,object,TRUE,,offering,???
 alt_trend,Trend for alt.,object,TRUE,,new,feature
 alt_min,Minimum value for alt.,float32,FALSE,,new,feature
 alt_max,Maximum value for alt.,float32,FALSE,,new,feature
+alt_base,Donor ALT – first measure,float32,FALSE,,new,feature
 ast_trend,Trend for ast.,object,TRUE,,new,feature
 ast_min,Minimum value for ast.,float32,FALSE,,new,feature
 ast_max,Maximum value for ast.,float32,FALSE,,new,feature
+ast_base,Donor AST – first measure,float32,FALSE,,new,feature
 amylase_trend,Trend for amylase.,object,TRUE,,new,feature
 amylase_min,Minimum value for amylase.,float32,FALSE,,new,feature
 amylase_max,Maximum value for amylase.,float32,FALSE,,new,feature
+amylase_base,Donor amylase – first measure,float32,FALSE,,new,feature
 creatinine_trend,Trend for creatinine.,object,TRUE,,new,feature
 creatinine_min,Minimum value for creatinine.,float32,FALSE,,new,feature
 creatinine_max,Maximum value for creatinine.,float32,FALSE,,new,feature
+creatinine_base,Donor creatinine – first measure,float32,FALSE,,new,feature
 degfr_trend,Trend for degfr.,object,TRUE,,new,feature
 degfr_min,Minimum value for degfr.,float32,FALSE,,new,feature
 degfr_max,Maximum value for degfr.,float32,FALSE,,new,feature
 degfr_base,Donor eGFR – first measure,float32,FALSE,,new,feature
-dial_type,Tells the most recent type of dialysis regarding transplantation.,object,TRUE,,new,feature
-dial_days,Tells how long the patient have been on dialysis.,float32,FALSE,,new,feature
+dial_type,Dialysis type,object,TRUE,,new,feature
+dial_days,Days on dialysis,float32,FALSE,,new,feature
 random,Dummy random column for feature selection.,float32,FALSE,,new,feature
 dsurv,Denied outcome survival time (days),float32,FALSE,,new,target
 dcens,Denied Outcome censoring indicator,object,TRUE,Censored:Transplant:Removal:Death,new,target
-matching_policy,Matching policy,object,TRUE,,new,target
+matching_policy,Matching policy,object,TRUE,,new,feature

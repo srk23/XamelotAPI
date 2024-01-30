@@ -12,3 +12,5 @@ dist
 xmlot.egg-info/
 notebooks/weight_checkpoint*
 notebooks/.ipynb_checkpoints/
+prototype/data/dump/accepted/_imputer.pkl
+prototype/data/dump/denied/_imputer.pkl
