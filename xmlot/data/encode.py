@@ -197,7 +197,7 @@ class OneHotEncoder:
         # Finally, re-order them, and uniformise types to `float32`.
         return encoded_df.reindex(idx_cols, axis=1).astype('float32')
 
-    def decode(self, df):
+    def decode(self, df, warning_on=True):
         decoded_df = df.copy()
 
         columns_to_drop = list()
@@ -233,12 +233,13 @@ class OneHotEncoder:
                     partial_df = partial_df.mask((partial_df.sum(axis=1) == 0), other=np.nan)
 
                     # Decode one hot encoding by taking the argmax.
-                    partial_df = pd.DataFrame(partial_df.idxmax(axis=1), columns=[old_column])
+                    partial_df = pd.DataFrame(partial_df.idxmax(axis=1, skipna=True), columns=[old_column])
 
                     # Insert unknown values when in presence of inconsistent encodings.
                     mask = (df[columns].copy().sum(axis=1) > 1)
                     if sum(mask) > 0:
-                        print("WARNING: some one hot encodings for column '{}' sums above one!".format(old_column))
+                        if warning_on:
+                            print("WARNING: some one hot encodings for column '{}' sums above one!".format(old_column))
                         partial_df = partial_df.mask(mask, other=pd.NA)
 
                     columns_to_add.append(partial_df)

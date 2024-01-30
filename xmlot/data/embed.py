@@ -198,7 +198,13 @@ def embed_data(
 
     # df = extract_dense_dataframe(df, threshold)
     # visitor.extract_dense_dataframe(df, threshold)
-    df, ohe = encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
+    df, ohe = encode_categorical_data(
+        df,
+        descriptor=descriptor,
+        separator=separator,
+        exceptions=exceptions,
+        default_categories=default_categories
+    )
     visitor.encode_categorical_data(df, descriptor, separator, exceptions, default_categories)
 
     return df, ohe

@@ -40,8 +40,6 @@ DF3  = pd.DataFrame({
 
 DF4 = pd.DataFrame({"col2": [X, 0, 1, 2]})
 
-
-
 def test_encode_decode_without_nan():
     original_df = DF1
 

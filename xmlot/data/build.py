@@ -346,7 +346,9 @@ def build_easy_trend(df, columns):
         else:
             return np.nan
 
-    return (df[columns].idxmax(axis=1).map(f) - df[columns].idxmin(axis=1).map(f)).apply(np.sign)
+    return (
+            df[columns].idxmax(axis=1).map(f) - df[columns].idxmin(axis=1).map(f)
+    ).apply(np.sign)
 
 
 def build_base_and_max(df, prefix):
