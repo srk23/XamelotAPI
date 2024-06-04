@@ -14,13 +14,22 @@ import numpy as np
 #   FUNCTIONS   #
 #################
 
-def survival_calibration(data, predictions, xcens, xsurv, years=(1, 5, 10)):
+def survival_calibration(data, predictions, xcens, xsurv, events=[1.], censored=0., years=(1, 5, 10)):
     results = dict()
     for year_idx, year in enumerate(years):
         results[year] = dict()
 
         # Get event status with respect to year.
-        df = pd.DataFrame({"groundtruth": build_single_classification_from_survival(data, 365 * year, xcens, xsurv)})
+        df = pd.DataFrame(
+            {"groundtruth": build_single_classification_from_survival(
+                data, 
+                365 * year, 
+                xcens, 
+                xsurv,
+                events,
+                censored
+            )}
+        )
 
         # Add predictions
         df["prediction"] = predictions[year_idx]
@@ -98,8 +107,12 @@ class CalibratedSurvivalModel(FromTheShelfModel):
             t += results[year]["true"]
 
         # Fit sigmoid
+        epsilon = parameters["epsilon"] if "epsilon" in parameters.keys() else 1e-5
+
         p = np.array(p)
-        t = np.log((1 / np.array(t)) - 1)
+        t = (1 / np.array(t)) - 1
+        t = np.maximum(t, epsilon)
+        t = np.log(t)
 
         self.m_calibrator.fit(p.reshape(-1, 1), t.reshape(-1, 1))
 
