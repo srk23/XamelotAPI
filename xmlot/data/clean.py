@@ -206,43 +206,84 @@ def transform_dialysis_columns(df, descriptor, **_):
 
     Returns: the updated DataFrame.
     """
-    is_positive_or_negative = {
-        "days_on_dial_tx": lambda x: 0 if x > 0 else 1,
-        "dial_at_reg"    : lambda x: 1 if x == "Not on dialysis" else 0,
-        "dial_at_tx_type": lambda x: 1 if x == "Not on dialysis" else 0,
-        "dial_at_tx"     : lambda x: descriptor.get_entry("dial_at_tx").categorical_keys[x]
-    }
-    df["dial_code"] = build_binary_code(
-        df,
-        list(is_positive_or_negative.keys()),
-        is_positive_or_negative
-    )
+    def f(s):
+        r = s['dial_at_reg']
+        t = s['dial_at_tx_type']
+        b = s['dial_at_tx']
+        
+        if pd.isna(t) and pd.isna(b): # if no information at transplant, get information at registration (whatever it is)
+            return r
+        elif pd.isna(t) and not pd.isna(b): # if we only have binary information about dialysis at transplant
+            if b == 'No':
+                return 'Not on dialysis'
+            else:
+                return r
+        elif pd.isna(b) and not pd.isna(t): # if information about dialysis type at transplant, keep it.
+            return t
+        else: # if complete information at transplant, check if dial_at_tx and dial_at_tx_type match
+            if (b == 'No' and t == 'Not on dialysis') or (b == 'Yes' and t in ['Haemodialysis', 'Peritoneal dialysis']):
+                return t
+            else:
+                return np.nan
 
-    df["dial_type"] = df["dial_at_tx_type"]
-    df["dial_days"] = df["days_on_dial_tx"]
-
-    df.loc[df['dial_code'].isin([3, 27, 30, 39, 41]), "dial_days"] = 0
-    df.loc[df['dial_code'].isin([29, 32])           , "dial_days"] = np.nan
-
-    df.loc[df['dial_code'].isin([3, 6, 8, 30, 33, 35, 44, 62]), "dial_type"] = df["dial_at_reg"]
-    df.loc[df['dial_code'] == 27, "dial_type"] = "Not on dialysis"
-
+    df['dial_type'] = df.apply(f, axis=1)
+    
     # Minor adjustments for the "Not on dialysis" entries
     # Unknown dial_days are set to zero when dial_type is "Not on dialysis".
+    df["dial_days"] = df["days_on_dial_tx"]
     df["dial_days"] = df["dial_days"].mask(
-        (df["dial_type"] == "Not on dialysis")
-        & df["dial_days"].isna(),
+        df["dial_type"] == "Not on dialysis",
         other=0
     )
+    
+    return df.drop(columns=['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx'])
 
-    # dial_days and dial_type are set to NaN when they have contradictory values ("Not on dialysis" vs >0 dial days).
-    df[["dial_days", "dial_type"]] = df[["dial_days", "dial_type"]].mask(
-        (df["dial_type"] == "Not on dialysis")
-        & df["dial_days"] > 0,
-        other=np.nan
-    )
+    # """
+    # Transform dialysis related columns.
 
-    return df.drop(columns=['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'])
+    # Args:
+    #     - df         : a DataFrame;
+    #     - descriptor : a Descriptor.
+
+    # Returns: the updated DataFrame.
+    # """
+    # is_positive_or_negative = {
+    #     "days_on_dial_tx": lambda x: 0 if x > 0 else 1,
+    #     "dial_at_reg"    : lambda x: 1 if x == "Not on dialysis" else 0,
+    #     "dial_at_tx_type": lambda x: 1 if x == "Not on dialysis" else 0,
+    #     "dial_at_tx"     : lambda x: descriptor.get_entry("dial_at_tx").categorical_keys[x]
+    # }
+    # df["dial_code"] = build_binary_code(
+    #     df,
+    #     list(is_positive_or_negative.keys()),
+    #     is_positive_or_negative
+    # )
+
+    # df["dial_type"] = df["dial_at_tx_type"]
+    # df["dial_days"] = df["days_on_dial_tx"]
+
+    # df.loc[df['dial_code'].isin([3, 27, 30, 39, 41]), "dial_days"] = 0
+    # df.loc[df['dial_code'].isin([29, 32])           , "dial_days"] = np.nan
+
+    # df.loc[df['dial_code'].isin([3, 6, 8, 30, 33, 35, 44, 62]), "dial_type"] = df["dial_at_reg"]
+    # df.loc[df['dial_code'] == 27, "dial_type"] = "Not on dialysis"
+
+    # # Minor adjustments for the "Not on dialysis" entries
+    # # Unknown dial_days are set to zero when dial_type is "Not on dialysis".
+    # df["dial_days"] = df["dial_days"].mask(
+    #     (df["dial_type"] == "Not on dialysis")
+    #     & df["dial_days"].isna(),
+    #     other=0
+    # )
+
+    # # dial_days and dial_type are set to NaN when they have contradictory values ("Not on dialysis" vs >0 dial days).
+    # df[["dial_days", "dial_type"]] = df[["dial_days", "dial_type"]].mask(
+    #     (df["dial_type"] == "Not on dialysis")
+    #     & df["dial_days"] > 0,
+    #     other=np.nan
+    # )
+
+    # return df.drop(columns=['dial_at_reg', 'dial_at_tx', 'dial_at_tx_type', 'days_on_dial_tx', 'dial_code'])
 
 
 def recompute_egfr(df, **_):
