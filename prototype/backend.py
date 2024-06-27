@@ -3,18 +3,23 @@ import requests
 
 
 import dill  as pickle
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
 import json
 import torch
 import re
+import shap
 
 from xmlot.config    import Configurator
 from xmlot.data.load import load_descriptor
 from xmlot.misc.lists import difference, intersection, union
-from xmlot.misc.explanations import aggregate_shap_explanation, reformat_explanation
+from xmlot.misc.explanations import aggregate_shap_explanation, reformat_explanation, build_waterfall_plot
 app = Flask(__name__)
+
+import base64
+from io import BytesIO
 
 # In terminal:
 """
@@ -73,6 +78,35 @@ def get_original_features(ohe):
         "mclass"
     ])
 
+def _plot_to_html_(fig):
+    """
+        Turn a Matplotlib figure into HTML.
+    """
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png', bbox_inches = 'tight' , dpi = 60)
+    output = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
+
+   # return "<img src=\'data:image/png;base64,{0}\' style=\'margin:auto;display:block;{1}\'>".format(output, style)
+    return output
+
+def _build_waterfall_plot_(explanation):
+    """
+    Build shap's waterfall plot from SHAP values,
+    and encode it for HTML.
+
+    Args:
+        - explanation: SHAP values, presented as a dictionary:
+            {
+                "values"      : SHAP values regarding each feature,
+                "base_values" : expected a priori outcomes,
+                "data"        : kidney offer
+            }
+    Returns: an encoded figure (str)
+    """
+    fig = build_waterfall_plot(explanation, max_display=10)
+
+    # Encode
+    return _plot_to_html_(fig)
 
 ###########################
 #    PREDICTION ENGINE    #
@@ -124,12 +158,16 @@ class Engine:
             }),
                 ohe, scaler, self.descriptor) for explanation in explanations
         ]
+        plots = list()
+        for formatted_explanation in formatted_explanations:
+            plots.append(_build_waterfall_plot_(formatted_explanation))
 
         results = {
             "predictions"  : pred,
             "uncertainties": ["Uncertainty is not implemented yet." for _ in YEARS],  # TODO: Uncertainty quantification
             "explanations" : formatted_explanations,
-            "scores"       : scores
+            "scores"       : scores,
+            "plots"        : plots
         }
 
         return results
@@ -213,7 +251,7 @@ class Engine:
         explainer       = self.load("/dump/denied/explainer")
         explainer.model = SHAPModel(model, idx=GRID_POINT, accepted=False)
         explanations     = [explainer(df.iloc[0])]
-
+        
         results = {
             "grid": discretiser.grid,
             "outcomes": {
@@ -286,6 +324,24 @@ def predict():
 
     results["results"]["denied"]   = engine.predict_denied(denied_offer)
 
+    #Build survival plot
+    fig, ax = plt.subplots(figsize=(20, 10))
+    grid = results["results"]["denied"]["grid"]
+    for i, (outcome, predictions) in enumerate(results["results"]["denied"]["outcomes"].items()):
+        print(predictions)
+        x      = list(map(lambda x_: x_ / 365, grid))
+        y      = predictions["predictions"]
+        x_pred = predictions["time"]
+        x[-1] = 5
+        plt.step(x, y, label="{0}".format(outcome), color="C{0}".format(i))
+        if x_pred <= x[-1]:
+            plt.vlines(x_pred, 0, 1, color="C{0}".format(i), linestyles="dashed")
+    plt.legend()
+
+    results["results"]["denied"]["survival_plot"]= _plot_to_html_(fig)
+
+
     print("\t-> {0}".format(results))
 
-    return requests.post(FRONTEND + "/results", json=results).content
+ #   return requests.post(FRONTEND + "/results", json=results).content
+    return results
